@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Check if user is authenticated (Admins log in using Firebase Auth)
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    // Settings are readable by everyone, but only writable by authenticated admins
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Categories are readable by everyone, but only writable by authenticated admins
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Products are readable by everyone, but only writable by authenticated admins
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Tables are readable by everyone (to check if valid), but only writable by authenticated admins
+    match /tables/{tableId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders can be created and read by anyone (using their unique Order ID),
+    // but can only be updated, deleted, or listed by authenticated admins.
+    match /orders/{orderId} {
+      allow create: if true;
+      allow get: if true;
+      allow list, update, delete: if isAdmin();
+    }
+
+    // OrderItems are created when an order is placed, and readable by order ID
+    match /orderItems/{orderItemId} {
+      allow create: if true;
+      allow get: if true;
+      allow list, update, delete: if isAdmin();
+    }
+  }
+}

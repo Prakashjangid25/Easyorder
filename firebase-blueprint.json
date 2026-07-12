@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "Setting": {
+      "title": "Setting",
+      "description": "Global restaurant settings controlling branding, hours, contact, and active state.",
+      "type": "object",
+      "properties": {
+        "restaurantName": { "type": "string" },
+        "restaurantLogo": { "type": "string" },
+        "restaurantBanner": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "darkModeLogo": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "instagram": { "type": "string" },
+        "openingTime": { "type": "string" },
+        "closingTime": { "type": "string" },
+        "isOpen": { "type": "boolean" },
+        "footerText": { "type": "string" },
+        "copyright": { "type": "string" }
+      },
+      "required": ["restaurantName", "isOpen"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "A food category such as Starters, Mains, Desserts, Drinks.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "sortOrder": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "sortOrder"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "A menu item containing detailed pricing, badges, and availability.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "isAvailable": { "type": "boolean" },
+        "isVeg": { "type": "boolean" },
+        "isBestSeller": { "type": "boolean" },
+        "isPopular": { "type": "boolean" },
+        "sortOrder": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["categoryId", "name", "price", "isAvailable", "isVeg"]
+    },
+    "Table": {
+      "title": "Table",
+      "description": "A physical dining table mapped to a valid table identifier.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "An order document placed by a customer from a specific table.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tableNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "preparing", "ready", "completed", "cancelled"] },
+        "customerNotes": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "items": { "type": "array" }
+      },
+      "required": ["tableNumber", "status", "totalAmount"]
+    },
+    "OrderItem": {
+      "title": "OrderItem",
+      "description": "Individual ordered item linking back to a main order.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderId": { "type": "string" },
+        "productId": { "type": "string" },
+        "name": { "type": "string" },
+        "quantity": { "type": "number" },
+        "price": { "type": "number" }
+      },
+      "required": ["orderId", "productId", "name", "quantity", "price"]
+    }
+  },
+  "firestore": {
+    "/settings/{settingId}": {
+      "schema": "Setting",
+      "description": "Global settings configuration document."
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product categories."
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Menu products list."
+    },
+    "/tables/{tableId}": {
+      "schema": "Table",
+      "description": "List of valid active tables."
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Active and historical customer orders."
+    },
+    "/orderItems/{orderItemId}": {
+      "schema": "OrderItem",
+      "description": "Details for items inside each order."
+    }
+  }
+}
