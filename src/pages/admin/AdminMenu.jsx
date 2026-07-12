@@ -380,15 +380,15 @@ export default function AdminMenu() {
                 ))}
               </div>
 
-              <div style={{ position: "relative", maxWidth: "260px", width: "100%" }}>
-                <Search size={16} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <div className="input-with-icon-wrapper" style={{ maxWidth: "260px" }}>
+                <Search size={16} className="input-with-icon-left" />
                 <input
                   type="text"
-                  className="search-input"
+                  className="search-input search-input-with-icon"
                   placeholder="Search dishes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ padding: "8px 12px 8px 36px", borderRadius: "30px", fontSize: "0.85rem" }}
+                  style={{ borderRadius: "30px", fontSize: "0.85rem" }}
                 />
               </div>
             </div>

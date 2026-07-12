@@ -157,15 +157,15 @@ export default function AdminOrders() {
             ))}
           </div>
 
-          <div style={{ position: "relative", maxWidth: "300px", width: "100%" }}>
-            <Search size={16} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+          <div className="input-with-icon-wrapper" style={{ maxWidth: "300px" }}>
+            <Search size={16} className="input-with-icon-left" />
             <input
               type="text"
-              className="search-input"
+              className="search-input search-input-with-icon"
               placeholder="Search table or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ padding: "10px 12px 10px 40px", borderRadius: "30px", fontSize: "0.85rem" }}
+              style={{ borderRadius: "30px", fontSize: "0.85rem" }}
             />
           </div>
         </div>
@@ -339,7 +339,7 @@ export default function AdminOrders() {
 
         {/* HIDDEN PRINT-FRIENDLY RECEIPT FORMAT */}
         {selectedOrder && (
-          <div className="print-receipt" style={{ display: "none" }} id="printable-kitchen-receipt">
+          <div className="print-receipt print-only" id="printable-kitchen-receipt">
             <h2 style={{ textAlign: "center", textTransform: "uppercase" }}>EasyOrder Kitchen</h2>
             <div style={{ textAlign: "center", borderBottom: "1px dashed #000", paddingBottom: "10px", marginBottom: "10px" }}>
               <h3>TABLE {selectedOrder.tableNumber}</h3>

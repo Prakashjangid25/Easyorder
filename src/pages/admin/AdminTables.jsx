@@ -231,7 +231,7 @@ export default function AdminTables() {
 
         {/* HIDDEN PRINT LAYOUT FOR SINGLE QR STICKER */}
         {selectedTableQR && (
-          <div className="print-receipt" style={{ display: "none" }} id="printable-qr-sticker">
+          <div className="print-receipt print-only" id="printable-qr-sticker">
             <div style={{ border: "2px solid #000", padding: "20px", borderRadius: "10px", textAlign: "center", width: "70mm", margin: "auto" }}>
               <h2 style={{ margin: "0 0 10px 0", fontSize: "18px", textTransform: "uppercase" }}>{settings?.restaurantName || "EasyOrder"}</h2>
               <p style={{ margin: "0 0 15px 0", fontSize: "14px" }}>Scan to Order Food</p>

@@ -41,11 +41,13 @@ export default function AdminLogin() {
 
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      // Set the timestamp FIRST to avoid race conditions with onAuthStateChanged / App.jsx guards
       localStorage.setItem("adminLoginTimestamp", Date.now().toString());
+      await signInWithEmailAndPassword(auth, email.trim(), password);
       showToast("Access Granted. Welcome back!", "success");
       navigate("/admin/dashboard");
     } catch (error) {
+      localStorage.removeItem("adminLoginTimestamp");
       console.error("Login error:", error);
       let errMsg = "Invalid email or password. Please try again.";
       if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
@@ -60,12 +62,14 @@ export default function AdminLogin() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
+      // Set the timestamp FIRST to avoid race conditions with onAuthStateChanged / App.jsx guards
+      localStorage.setItem("adminLoginTimestamp", Date.now().toString());
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      localStorage.setItem("adminLoginTimestamp", Date.now().toString());
       showToast("Access Granted via Google Login!", "success");
       navigate("/admin/dashboard");
     } catch (error) {
+      localStorage.removeItem("adminLoginTimestamp");
       console.error("Google Auth error:", error);
       showToast("Google login failed. Please ensure Google Sign-In is enabled.", "error");
     } finally {
@@ -91,16 +95,15 @@ export default function AdminLogin() {
           {/* Email input */}
           <div className="input-group">
             <label className="input-label" htmlFor="admin-email">Email Address</label>
-            <div style={{ position: "relative" }}>
-              <Mail size={16} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
+            <div className="input-with-icon-wrapper">
+              <Mail size={16} className="input-with-icon-left" />
               <input
                 id="admin-email"
                 type="email"
-                className="input-field"
+                className="input-field input-field-with-icon"
                 placeholder="admin@restaurant.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                style={{ padding: "12px 16px 12px 48px" }}
                 disabled={loading}
                 required
               />
@@ -110,16 +113,15 @@ export default function AdminLogin() {
           {/* Password Input */}
           <div className="input-group" style={{ marginBottom: "28px" }}>
             <label className="input-label" htmlFor="admin-password">Password</label>
-            <div style={{ position: "relative" }}>
-              <Lock size={16} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
+            <div className="input-with-icon-wrapper">
+              <Lock size={16} className="input-with-icon-left" />
               <input
                 id="admin-password"
                 type="password"
-                className="input-field"
+                className="input-field input-field-with-icon"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ padding: "12px 16px 12px 48px" }}
                 disabled={loading}
                 required
               />

@@ -50,11 +50,14 @@ function AdminProtectedRoute({ children }) {
           setCurrentUser(user);
           setAuthLoading(false);
         } else {
+          const wasActive = loginTime > 0;
           localStorage.removeItem("adminLoginTimestamp");
           signOut(auth).then(() => {
             setCurrentUser(null);
             setAuthLoading(false);
-            showToast("Your session has expired. Please sign in again.", "error");
+            if (wasActive) {
+              showToast("Your session has expired. Please sign in again.", "error");
+            }
           }).catch((err) => {
             console.error(err);
             setCurrentUser(null);
@@ -76,9 +79,12 @@ function AdminProtectedRoute({ children }) {
         const elapsed = Date.now() - loginTime;
         const SESSION_MAX_AGE = 12 * 60 * 60 * 1000;
         if (loginTime === 0 || elapsed >= SESSION_MAX_AGE) {
+          const wasActive = loginTime > 0;
           localStorage.removeItem("adminLoginTimestamp");
           await signOut(auth);
-          showToast("Your session has expired. Please sign in again.", "error");
+          if (wasActive) {
+            showToast("Your session has expired. Please sign in again.", "error");
+          }
         }
       }
     };
