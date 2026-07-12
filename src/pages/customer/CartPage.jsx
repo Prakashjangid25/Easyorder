@@ -4,6 +4,7 @@ import { useSettings } from "../../context/SettingsContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Trash2, UtensilsCrossed, AlertCircle } from "lucide-react";
 import { useToast } from "../../context/ToastContext.jsx";
+import { formatCurrency } from "../../utils/format.js";
 
 export default function CartPage() {
   const {
@@ -85,7 +86,7 @@ export default function CartPage() {
                       {item.name}
                     </div>
                     <div className="cart-item-subprice">
-                      ${Number(item.price).toFixed(2)} x {item.quantity}
+                      {formatCurrency(item.price)} x {item.quantity}
                     </div>
                   </div>
 
@@ -144,16 +145,16 @@ export default function CartPage() {
               </div>
               <div className="summary-row">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="summary-row">
                 <span>GST / Tax (5%)</span>
-                <span>${gstAmount.toFixed(2)}</span>
+                <span>{formatCurrency(gstAmount)}</span>
               </div>
               
               <div className="summary-total">
                 <span>Total Payable</span>
-                <span>${totalAmount.toFixed(2)}</span>
+                <span>{formatCurrency(totalAmount)}</span>
               </div>
             </div>
 

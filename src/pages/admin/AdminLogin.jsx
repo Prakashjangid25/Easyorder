@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import React, { useState, useEffect } from "react";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../../firebase/firebase.js";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -14,6 +14,24 @@ export default function AdminLogin() {
   const { settings } = useSettings();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const loginTime = parseInt(localStorage.getItem("adminLoginTimestamp") || "0", 10);
+        const elapsed = Date.now() - loginTime;
+        const SESSION_MAX_AGE = 12 * 60 * 60 * 1000;
+        if (loginTime > 0 && elapsed < SESSION_MAX_AGE) {
+          navigate("/admin/dashboard", { replace: true });
+        } else {
+          // expired or invalid
+          localStorage.removeItem("adminLoginTimestamp");
+          signOut(auth).catch(console.error);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
+
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -24,6 +42,7 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
+      localStorage.setItem("adminLoginTimestamp", Date.now().toString());
       showToast("Access Granted. Welcome back!", "success");
       navigate("/admin/dashboard");
     } catch (error) {
@@ -43,6 +62,7 @@ export default function AdminLogin() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
+      localStorage.setItem("adminLoginTimestamp", Date.now().toString());
       showToast("Access Granted via Google Login!", "success");
       navigate("/admin/dashboard");
     } catch (error) {
@@ -72,7 +92,7 @@ export default function AdminLogin() {
           <div className="input-group">
             <label className="input-label" htmlFor="admin-email">Email Address</label>
             <div style={{ position: "relative" }}>
-              <Mail size={16} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <Mail size={16} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
               <input
                 id="admin-email"
                 type="email"
@@ -80,7 +100,7 @@ export default function AdminLogin() {
                 placeholder="admin@restaurant.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                style={{ paddingLeft: "42px" }}
+                style={{ padding: "12px 16px 12px 48px" }}
                 disabled={loading}
                 required
               />
@@ -91,7 +111,7 @@ export default function AdminLogin() {
           <div className="input-group" style={{ marginBottom: "28px" }}>
             <label className="input-label" htmlFor="admin-password">Password</label>
             <div style={{ position: "relative" }}>
-              <Lock size={16} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <Lock size={16} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
               <input
                 id="admin-password"
                 type="password"
@@ -99,7 +119,7 @@ export default function AdminLogin() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ paddingLeft: "42px" }}
+                style={{ padding: "12px 16px 12px 48px" }}
                 disabled={loading}
                 required
               />

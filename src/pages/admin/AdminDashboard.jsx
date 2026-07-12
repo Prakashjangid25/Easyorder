@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import AdminSidebar from "./AdminSidebar.jsx";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
-import { DollarSign, Clock, CheckCircle, ShoppingCart, Ban, CookingPot, Flame, Award, Utensils } from "lucide-react";
+import { IndianRupee, Clock, CheckCircle, ShoppingCart, Ban, CookingPot, Flame, Award, Utensils } from "lucide-react";
 import { StatCardSkeleton, TableRowSkeleton } from "../../components/SkeletonLoader.jsx";
+import { formatCurrency } from "../../utils/format.js";
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
@@ -112,11 +113,11 @@ export default function AdminDashboard() {
             {/* Stat: Revenue Today */}
             <div className="card stat-card" style={{ borderLeft: "4px solid #10b981" }}>
               <div className="stat-icon-container" style={{ backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#10b981" }}>
-                <DollarSign size={24} />
+                <IndianRupee size={24} />
               </div>
               <div>
                 <span className="stat-label">Revenue Today</span>
-                <div className="stat-number">${stats.revenueToday.toFixed(2)}</div>
+                <div className="stat-number">{formatCurrency(stats.revenueToday)}</div>
               </div>
             </div>
 
@@ -246,7 +247,7 @@ export default function AdminDashboard() {
                       </td>
                       <td style={{ fontWeight: "600" }}>Table {o.tableNumber}</td>
                       <td style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{o.orderTime || "N/A"}</td>
-                      <td style={{ fontWeight: "700", fontFamily: "var(--font-display)" }}>${Number(o.totalAmount || 0).toFixed(2)}</td>
+                      <td style={{ fontWeight: "700", fontFamily: "var(--font-display)" }}>{formatCurrency(o.totalAmount)}</td>
                       <td>
                         <span className={`status-badge status-${o.status}`}>
                           {o.status}

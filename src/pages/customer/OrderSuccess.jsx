@@ -5,6 +5,7 @@ import { db } from "../../firebase/firebase.js";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useCart } from "../../context/CartContext.jsx";
 import { Check, ArrowLeft, Clock, ShoppingBag, PhoneCall } from "lucide-react";
+import { formatCurrency } from "../../utils/format.js";
 
 export default function OrderSuccess() {
   const { orderId } = useParams();
@@ -251,7 +252,7 @@ export default function OrderSuccess() {
                 <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>x{item.quantity}</span>
               </div>
               <span style={{ fontFamily: "var(--font-display)", fontWeight: "600" }}>
-                ${(item.price * item.quantity).toFixed(2)}
+                {formatCurrency(item.price * item.quantity)}
               </span>
             </div>
           ))}
@@ -278,7 +279,7 @@ export default function OrderSuccess() {
           }}
         >
           <span>Total Paid</span>
-          <span style={{ color: "var(--primary-color)" }}>${Number(order.totalAmount).toFixed(2)}</span>
+          <span style={{ color: "var(--primary-color)" }}>{formatCurrency(order.totalAmount)}</span>
         </div>
       </div>
 

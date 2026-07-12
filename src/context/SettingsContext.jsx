@@ -6,7 +6,7 @@ import { handleFirestoreError, OperationType } from "../firebase/errorHandler.js
 const SettingsContext = createContext();
 
 const defaultSettings = {
-  restaurantName: "EasyOrder Bistro",
+  restaurantName: "EasyOrder",
   restaurantLogo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop",
   restaurantBanner: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop",
   primaryColor: "#e63946",

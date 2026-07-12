@@ -5,6 +5,7 @@ import { db } from "../../firebase/firebase.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import { Plus, Edit, Trash2, Tag, Utensils, ToggleLeft, ToggleRight, Search, Upload, Check, AlertCircle } from "lucide-react";
 import { handleFirestoreError, OperationType } from "../../firebase/errorHandler.js";
+import { formatCurrency } from "../../utils/format.js";
 
 export default function AdminMenu() {
   const [categories, setCategories] = useState([]);
@@ -432,7 +433,7 @@ export default function AdminMenu() {
                           {getCategoryName(p.categoryId)}
                         </td>
                         <td style={{ fontWeight: "700", fontFamily: "var(--font-display)" }}>
-                          ${Number(p.price).toFixed(2)}
+                          {formatCurrency(p.price)}
                         </td>
                         <td>
                           <button onClick={() => toggleAvailability(p)} style={{ color: p.isAvailable ? "var(--status-completed)" : "var(--text-muted)" }}>
@@ -519,13 +520,13 @@ export default function AdminMenu() {
 
                   {/* Price */}
                   <div className="input-group">
-                    <label className="input-label" htmlFor="prod-price">Price ($ USD) (Required)</label>
+                    <label className="input-label" htmlFor="prod-price">Price (₹ INR) (Required)</label>
                     <input
                       id="prod-price"
                       type="number"
                       step="0.01"
                       className="input-field"
-                      placeholder="9.99"
+                      placeholder="199"
                       value={productPrice}
                       onChange={(e) => setProductPrice(e.target.value)}
                       required

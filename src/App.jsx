@@ -27,7 +27,7 @@ import AdminSettings from "./pages/admin/AdminSettings.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
 // Authentication state checkers
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
 import { auth, db } from "./firebase/firebase.js";
 
@@ -37,14 +37,59 @@ import { auth, db } from "./firebase/firebase.js";
 function AdminProtectedRoute({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setAuthLoading(false);
+      if (user) {
+        const loginTime = parseInt(localStorage.getItem("adminLoginTimestamp") || "0", 10);
+        const elapsed = Date.now() - loginTime;
+        const SESSION_MAX_AGE = 12 * 60 * 60 * 1000;
+
+        if (loginTime > 0 && elapsed < SESSION_MAX_AGE) {
+          setCurrentUser(user);
+          setAuthLoading(false);
+        } else {
+          localStorage.removeItem("adminLoginTimestamp");
+          signOut(auth).then(() => {
+            setCurrentUser(null);
+            setAuthLoading(false);
+            showToast("Your session has expired. Please sign in again.", "error");
+          }).catch((err) => {
+            console.error(err);
+            setCurrentUser(null);
+            setAuthLoading(false);
+          });
+        }
+      } else {
+        setCurrentUser(null);
+        setAuthLoading(false);
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [showToast]);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      if (auth.currentUser) {
+        const loginTime = parseInt(localStorage.getItem("adminLoginTimestamp") || "0", 10);
+        const elapsed = Date.now() - loginTime;
+        const SESSION_MAX_AGE = 12 * 60 * 60 * 1000;
+        if (loginTime === 0 || elapsed >= SESSION_MAX_AGE) {
+          localStorage.removeItem("adminLoginTimestamp");
+          await signOut(auth);
+          showToast("Your session has expired. Please sign in again.", "error");
+        }
+      }
+    };
+
+    // Run check immediately
+    checkSession();
+
+    // Check periodically every 15 seconds
+    const interval = setInterval(checkSession, 15000);
+    return () => clearInterval(interval);
+  }, [showToast]);
 
   if (authLoading) {
     return (

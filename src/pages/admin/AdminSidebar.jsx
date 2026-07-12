@@ -29,6 +29,7 @@ export default function AdminSidebar() {
   const handleLogout = async () => {
     if (window.confirm("Are you sure you want to log out?")) {
       try {
+        localStorage.removeItem("adminLoginTimestamp");
         await signOut(auth);
         navigate("/admin/login");
       } catch (err) {

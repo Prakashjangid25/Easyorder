@@ -7,6 +7,7 @@ import { useTheme } from "../../context/ThemeContext.jsx";
 import { Search, ShoppingBag, Leaf, Flame, Sparkles, AlertCircle, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MenuCardSkeleton } from "../../components/SkeletonLoader.jsx";
+import { formatCurrency } from "../../utils/format.js";
 
 export default function RestaurantMenu() {
   const [categories, setCategories] = useState([]);
@@ -215,7 +216,7 @@ export default function RestaurantMenu() {
 
                   {/* Pricing and Tap targets Action */}
                   <div className="product-price-action">
-                    <span className="product-price">${Number(p.price).toFixed(2)}</span>
+                    <span className="product-price">{formatCurrency(p.price)}</span>
                     
                     {qty > 0 ? (
                       <div className="quantity-selector">
@@ -272,7 +273,7 @@ export default function RestaurantMenu() {
           <span>View Cart</span>
           <span className="cart-badge-count">{getCartCount()}</span>
           <span style={{ marginLeft: "12px", borderLeft: "1px solid rgba(255,255,255,0.3)", paddingLeft: "12px" }}>
-            ${getCartTotal().toFixed(2)}
+            {formatCurrency(getCartTotal())}
           </span>
         </button>
       )}

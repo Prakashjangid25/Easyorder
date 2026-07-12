@@ -5,6 +5,7 @@ import { db } from "../../firebase/firebase.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import { Clock, Printer, CheckCircle, Ban, CookingPot, ChefHat, Search, Volume2, Calendar, FileText } from "lucide-react";
 import { handleFirestoreError, OperationType } from "../../firebase/errorHandler.js";
+import { formatCurrency } from "../../utils/format.js";
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -211,7 +212,7 @@ export default function AdminOrders() {
                         {o.items?.reduce((tot, i) => tot + i.quantity, 0)} Items • {o.orderTime}
                       </span>
                       <span style={{ fontWeight: "700", color: "var(--text-primary)" }}>
-                        ${Number(o.totalAmount || 0).toFixed(2)}
+                        {formatCurrency(o.totalAmount)}
                       </span>
                     </div>
                   </div>
@@ -304,7 +305,7 @@ export default function AdminOrders() {
                           <span style={{ fontWeight: "700", fontSize: "1.05rem" }}>x{item.quantity}</span>
                           <span style={{ fontWeight: "600" }}>{item.name}</span>
                         </div>
-                        <span style={{ fontSize: "0.95rem", color: "var(--text-secondary)" }}>${(item.price * item.quantity).toFixed(2)}</span>
+                        <span style={{ fontSize: "0.95rem", color: "var(--text-secondary)" }}>{formatCurrency(item.price * item.quantity)}</span>
                       </div>
                     ))}
                   </div>
@@ -323,7 +324,7 @@ export default function AdminOrders() {
                 {/* Price aggregation footer */}
                 <div style={{ borderTop: "2px solid var(--border-color)", paddingTop: "16px", display: "flex", justifyContent: "space-between", fontSize: "1.3rem", fontWeight: "700", fontFamily: "var(--font-display)" }}>
                   <span>Grand Total</span>
-                  <span style={{ color: "var(--primary-color)" }}>${Number(selectedOrder.totalAmount || 0).toFixed(2)}</span>
+                  <span style={{ color: "var(--primary-color)" }}>{formatCurrency(selectedOrder.totalAmount)}</span>
                 </div>
               </div>
             ) : (
@@ -350,7 +351,7 @@ export default function AdminOrders() {
               {selectedOrder.items?.map((item, idx) => (
                 <div key={idx} style={{ display: "flex", justifyContent: "space-between", margin: "6px 0", fontSize: "14px" }}>
                   <span><strong>x{item.quantity}</strong> {item.name} {item.isVeg ? "(V)" : ""}</span>
-                  <span>${(item.price * item.quantity).toFixed(2)}</span>
+                  <span>{formatCurrency(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
@@ -364,7 +365,7 @@ export default function AdminOrders() {
 
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "16px", fontWeight: "bold" }}>
               <span>TOTAL</span>
-              <span>${Number(selectedOrder.totalAmount).toFixed(2)}</span>
+              <span>{formatCurrency(selectedOrder.totalAmount)}</span>
             </div>
           </div>
         )}

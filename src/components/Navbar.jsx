@@ -16,6 +16,7 @@ export default function Navbar() {
 
   const handleAdminLogout = async () => {
     try {
+      localStorage.removeItem("adminLoginTimestamp");
       await signOut(auth);
       navigate("/admin/login");
     } catch (error) {
@@ -39,10 +40,20 @@ export default function Navbar() {
             style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }}
           />
           <span className="logo-text">
-            {settings.restaurantName.split(" ")[0]}
-            <span className="logo-accent">
-              {settings.restaurantName.split(" ").slice(1).join(" ") || " Order"}
-            </span>
+            {settings.restaurantName === "EasyOrder" ? (
+              <>
+                Easy<span className="logo-accent">Order</span>
+              </>
+            ) : (
+              <>
+                {settings.restaurantName.split(" ")[0]}
+                {settings.restaurantName.split(" ").length > 1 && (
+                  <span className="logo-accent">
+                    {" "}{settings.restaurantName.split(" ").slice(1).join(" ")}
+                  </span>
+                )}
+              </>
+            )}
           </span>
         </div>
 
