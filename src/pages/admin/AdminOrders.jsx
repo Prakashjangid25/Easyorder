@@ -6,6 +6,7 @@ import { useToast } from "../../context/ToastContext.jsx";
 import { Clock, Printer, CheckCircle, Ban, CookingPot, ChefHat, Search, Volume2, Calendar, FileText } from "lucide-react";
 import { handleFirestoreError, OperationType } from "../../firebase/errorHandler.js";
 import { formatCurrency } from "../../utils/format.js";
+import { playNewOrderChime } from "../../utils/audio.js";
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -13,38 +14,11 @@ export default function AdminOrders() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [highlightedOrderIds, setHighlightedOrderIds] = useState(new Set());
 
   const { showToast } = useToast();
   const knownOrderIds = useRef(new Set());
   const initialLoadDone = useRef(false);
-
-  // Play a custom, premium synthesizer chime for new order arrivals
-  const playNewOrderChime = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-
-      osc.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-
-      osc.type = "sine";
-      
-      // Elegant arpeggio sequence C5 -> E5 -> G5
-      const now = audioCtx.currentTime;
-      osc.frequency.setValueAtTime(523.25, now); // C5
-      osc.frequency.setValueAtTime(659.25, now + 0.12); // E5
-      osc.frequency.setValueAtTime(783.99, now + 0.24); // G5
-
-      gainNode.gain.setValueAtTime(0.4, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
-
-      osc.start(now);
-      osc.stop(now + 0.55);
-    } catch (e) {
-      console.warn("Audio Context blocked or failed:", e);
-    }
-  };
 
   useEffect(() => {
     // Real-time Firestore orders listener
@@ -53,7 +27,7 @@ export default function AdminOrders() {
       q,
       (snapshot) => {
         const list = [];
-        let hasNewOrder = false;
+        const newOrdersToAlert = [];
 
         snapshot.forEach((docSnap) => {
           const orderId = docSnap.id;
@@ -62,14 +36,46 @@ export default function AdminOrders() {
 
           // If this is a new order ID after initial load, trigger alerts
           if (initialLoadDone.current && !knownOrderIds.current.has(orderId)) {
-            hasNewOrder = true;
+            newOrdersToAlert.push({ id: orderId, ...orderData });
           }
-          knownOrderIds.current.add(orderId);
         });
 
-        if (hasNewOrder) {
-          playNewOrderChime();
-          showToast("📢 New Order Arrived!", "success", "Kitchen console updated instantly.");
+        // Initialize known IDs first so we do not alert on first load
+        snapshot.forEach((docSnap) => {
+          knownOrderIds.current.add(docSnap.id);
+        });
+
+        // Trigger alerts for newly received orders
+        if (newOrdersToAlert.length > 0) {
+          newOrdersToAlert.forEach((order, index) => {
+            // Play sound with a small staggered delay if multiple new orders arrive together
+            setTimeout(() => {
+              playNewOrderChime();
+            }, index * 350);
+
+            // Display modern success green style popup in top-right
+            showToast(
+              "🟢 New Order Received",
+              "new-order",
+              `Table: ${order.tableNumber || "N/A"}\n\nPlease review the new order.`
+            );
+
+            // Add to highlighted state to show "NEW" badge and glow
+            setHighlightedOrderIds((prev) => {
+              const next = new Set(prev);
+              next.add(order.id);
+              return next;
+            });
+
+            // Auto-remove highlight after 6 seconds
+            setTimeout(() => {
+              setHighlightedOrderIds((prev) => {
+                const next = new Set(prev);
+                next.delete(order.id);
+                return next;
+              });
+            }, 6000);
+          });
         }
 
         setOrders(list);
@@ -178,17 +184,18 @@ export default function AdminOrders() {
               filteredOrders.map((o) => {
                 const isSelected = selectedOrder && selectedOrder.id === o.id;
                 const isNew = o.status === "pending";
+                const isHighlighted = highlightedOrderIds.has(o.id);
 
                 return (
                   <div
                     key={o.id}
-                    className={`card card-hover ${isSelected ? "selected-active-card" : ""}`}
+                    className={`card card-hover ${isSelected ? "selected-active-card" : ""} ${isHighlighted ? "new-order-highlight-card" : ""}`}
                     onClick={() => setSelectedOrder(o)}
                     style={{
                       padding: "16px 20px",
                       cursor: "pointer",
                       borderLeft: isNew ? "5px solid var(--status-pending)" : isSelected ? "5px solid var(--primary-color)" : "1px solid var(--border-color)",
-                      animation: isNew ? "pulse 2s infinite" : "none",
+                      animation: isHighlighted ? "none" : isNew ? "pulse 2s infinite" : "none",
                       backgroundColor: "var(--surface-color)"
                     }}
                     id={`order-card-${o.id}`}
@@ -198,8 +205,22 @@ export default function AdminOrders() {
                         <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
                           #{o.id.slice(-8).toUpperCase()}
                         </div>
-                        <h3 style={{ fontSize: "1.1rem", fontWeight: "700", marginTop: "4px" }}>
+                        <h3 style={{ fontSize: "1.1rem", fontWeight: "700", marginTop: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
                           Table {o.tableNumber}
+                          {isHighlighted && (
+                            <span style={{
+                              backgroundColor: "var(--status-completed, #10b981)",
+                              color: "#ffffff",
+                              fontSize: "0.65rem",
+                              fontWeight: "800",
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px"
+                            }}>
+                              NEW
+                            </span>
+                          )}
                         </h3>
                       </div>
                       <span className={`status-badge status-${o.status}`}>

@@ -1,14 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import AdminSidebar from "./AdminSidebar.jsx";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { IndianRupee, Clock, CheckCircle, ShoppingCart, Ban, CookingPot, Flame, Award, Utensils } from "lucide-react";
 import { StatCardSkeleton, TableRowSkeleton } from "../../components/SkeletonLoader.jsx";
 import { formatCurrency } from "../../utils/format.js";
+import { useToast } from "../../context/ToastContext.jsx";
+import { playNewOrderChime } from "../../utils/audio.js";
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const { showToast } = useToast();
+  const knownOrderIds = useRef(new Set());
+  const initialLoadDone = useRef(false);
 
   useEffect(() => {
     // Read all orders in real-time
@@ -17,10 +23,43 @@ export default function AdminDashboard() {
       q,
       (snapshot) => {
         const list = [];
-        snapshot.forEach((doc) => {
-          list.push({ id: doc.id, ...doc.data() });
+        const newOrdersToAlert = [];
+
+        snapshot.forEach((docSnap) => {
+          const orderId = docSnap.id;
+          const orderData = docSnap.data();
+          list.push({ id: orderId, ...orderData });
+
+          // If this is a new order ID after initial load, trigger alerts
+          if (initialLoadDone.current && !knownOrderIds.current.has(orderId)) {
+            newOrdersToAlert.push({ id: orderId, ...orderData });
+          }
         });
+
+        // Initialize known IDs first so we do not alert on first load
+        snapshot.forEach((docSnap) => {
+          knownOrderIds.current.add(docSnap.id);
+        });
+
+        // Trigger alerts for newly received orders
+        if (newOrdersToAlert.length > 0) {
+          newOrdersToAlert.forEach((order, index) => {
+            // Play sound with a small staggered delay if multiple new orders arrive together
+            setTimeout(() => {
+              playNewOrderChime();
+            }, index * 350);
+
+            // Display modern success green style popup in top-right
+            showToast(
+              "🟢 New Order Received",
+              "new-order",
+              `Table: ${order.tableNumber || "N/A"}\n\nPlease review the new order.`
+            );
+          });
+        }
+
         setOrders(list);
+        initialLoadDone.current = true;
         setLoading(false);
       },
       (err) => {
@@ -30,7 +69,7 @@ export default function AdminDashboard() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [showToast]);
 
   // Compute stats helper
   const getStats = () => {
