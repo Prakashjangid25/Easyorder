@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { useCart } from "../../context/CartContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -63,7 +63,7 @@ export default function TableSelection({ onValidTable }) {
         showToast(`Welcome! You are seated at ${matchedTable.name}`, "success");
         onValidTable();
       } else {
-        showToast("Invalid table number. Please check or ask staff.", "error");
+        showToast("This table is not available. Please enter a valid table number or contact the restaurant staff.", "error");
       }
     } catch (error) {
       handleFirestoreError(error, OperationType.GET, "tables");
@@ -71,39 +71,6 @@ export default function TableSelection({ onValidTable }) {
       setVerifying(false);
     }
   };
-
-  const handleAutoRegister = async (customName) => {
-    const targetTable = (customName || tableInput).trim();
-    if (!targetTable) {
-      showToast("Please enter a table name to register", "error");
-      return;
-    }
-
-    setVerifying(true);
-    try {
-      await addDoc(collection(db, "tables"), {
-        name: targetTable,
-        createdAt: new Date().toISOString()
-      });
-      setTableNumber(targetTable);
-      showToast(`Successfully registered and entered as ${targetTable}!`, "success");
-      onValidTable();
-    } catch (error) {
-      console.error("Error creating table:", error);
-      showToast("Could not auto-register table. Please check Firebase configuration.", "error");
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const cleanInput = tableInput.trim().toLowerCase();
-  const matchedFromState = activeTables.find(
-    (t) =>
-      t.name.trim().toLowerCase() === cleanInput ||
-      t.name.trim().toLowerCase() === `table ${cleanInput}` ||
-      cleanInput === `table ${t.name.trim().toLowerCase()}`
-  );
-  const showRegisterOption = tableInput.trim().length > 0 && !matchedFromState && !verifying;
 
   return (
     <div className="table-gate-screen" id="table-gatekeeper-container">
@@ -126,8 +93,8 @@ export default function TableSelection({ onValidTable }) {
               id="table-number-input"
               type="text"
               className="input-field"
+              placeholder="e.g. 5"
               autocomplete="off"
-              placeholder="e.g. Table 5"
               value={tableInput}
               onChange={(e) => setTableInput(e.target.value)}
               disabled={verifying}
@@ -147,41 +114,7 @@ export default function TableSelection({ onValidTable }) {
           </button>
         </form>
 
-        {/* Dynamic Auto-Register Fallback Option */}
-        {showRegisterOption && (
-          <div style={{
-            width: "100%",
-            marginTop: "16px",
-            padding: "16px",
-            borderRadius: "10px",
-            backgroundColor: "rgba(230, 57, 70, 0.05)",
-            border: "1px dashed var(--primary-color)",
-            textAlign: "center"
-          }} id="auto-register-helper-box">
-            <p style={{ fontSize: "0.8rem", color: "var(--primary-color)", fontWeight: "600", marginBottom: "8px" }}>
-              "{tableInput}" is not registered in the database yet.
-            </p>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => handleAutoRegister(tableInput)}
-              style={{
-                fontSize: "0.85rem",
-                padding: "8px 16px",
-                width: "100%",
-                backgroundColor: "var(--primary-color)",
-                border: "none",
-                borderRadius: "6px",
-                color: "#ffffff",
-                cursor: "pointer",
-                fontWeight: "600"
-              }}
-              id="auto-register-btn"
-            >
-              ✨ Auto-Register "{tableInput}" & Enter Menu
-            </button>
-          </div>
-        )}
+
 
         {/* Active Tables List / Badges */}
         {activeTables.length > 0 ? (
@@ -222,7 +155,7 @@ export default function TableSelection({ onValidTable }) {
           !verifying && (
             <div style={{ width: "100%", marginTop: "20px", textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem" }}>
               <p>No active tables found in the database.</p>
-              <p style={{ fontSize: "0.75rem", marginTop: "4px" }}>Create one by entering a table number above, or manage tables in the Admin Panel.</p>
+              <p style={{ fontSize: "0.75rem", marginTop: "4px" }}>Please contact the restaurant staff to register tables.</p>
             </div>
           )
         )}
