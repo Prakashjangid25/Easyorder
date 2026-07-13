@@ -126,7 +126,8 @@ export default function TableSelection({ onValidTable }) {
               id="table-number-input"
               type="text"
               className="input-field"
-              placeholder="e.g. Table 5 or 5"
+              autocomplete="off"
+              placeholder="e.g. Table 5"
               value={tableInput}
               onChange={(e) => setTableInput(e.target.value)}
               disabled={verifying}
