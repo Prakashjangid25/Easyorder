@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, ShoppingBag, Utensils, Table, Settings, LogOut, Moon, Sun, ShieldCheck, ChevronDown } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Utensils, Table, Settings, LogOut, Moon, Sun, ShieldCheck } from "lucide-react";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useTheme } from "../../context/ThemeContext.jsx";
 import { auth, db } from "../../firebase/firebase.js";
@@ -155,7 +155,7 @@ export default function AdminSidebar() {
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
         {isSuperAdmin && (
           <Link
-            to="/super-admin/restaurants"
+            to="/superadmin/dashboard"
             style={{
               display: "flex",
               alignItems: "center",

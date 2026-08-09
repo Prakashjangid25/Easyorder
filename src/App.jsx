@@ -23,6 +23,13 @@ import AdminMenu from "./pages/admin/AdminMenu.jsx";
 import AdminTables from "./pages/admin/AdminTables.jsx";
 import AdminSettings from "./pages/admin/AdminSettings.jsx";
 
+// Super Admin Views
+import SuperAdminLogin from "./pages/super-admin/SuperAdminLogin.jsx";
+import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard.jsx";
+import SuperAdminRestaurants from "./pages/super-admin/SuperAdminRestaurants.jsx";
+import SuperAdminInspectRestaurant from "./pages/super-admin/SuperAdminInspectRestaurant.jsx";
+import SuperAdminSettings from "./pages/super-admin/SuperAdminSettings.jsx";
+
 // Fallback 404 view
 import NotFound from "./pages/NotFound.jsx";
 
@@ -111,6 +118,45 @@ function AdminProtectedRoute({ children }) {
 
   if (!currentUser) {
     return <Navigate to="/admin/login" replace />;
+  }
+
+  return children;
+}
+
+/* ==========================================================================
+   SUPER ADMIN ROUTE PROTECTION COMPONENT
+   ========================================================================== */
+function SuperAdminProtectedRoute({ children }) {
+  const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    const session = localStorage.getItem("superAdminSession");
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed && parsed.email) {
+          setIsSuperAdmin(true);
+        }
+      } catch (e) {
+        localStorage.removeItem("superAdminSession");
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="table-gate-screen">
+        <div className="card" style={{ padding: "40px", textAlign: "center" }}>
+          <h3>Authenticating Super Admin...</h3>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSuperAdmin) {
+    return <Navigate to="/superadmin" replace />;
   }
 
   return children;
@@ -265,9 +311,14 @@ function FootBranding() {
   const { settings } = useSettings();
   const location = useLocation();
 
-  // Hide footer inside active admin interfaces
-  const isAdminActive = location.pathname.startsWith("/admin");
-  if (isAdminActive) return null;
+  // Hide footer on home login page, admin interface, or super admin interface
+  const isHideFooter =
+    location.pathname === "/" ||
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/superadmin") ||
+    location.pathname.startsWith("/super-admin");
+
+  if (isHideFooter) return null;
 
   return (
     <footer
@@ -308,15 +359,10 @@ export default function App() {
                 {/* Main Content Router */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                   <Routes>
-                    {/* Customer Paths wrapped in ErrorBoundary */}
-                    <Route
-                      path="/"
-                      element={
-                        <ErrorBoundary>
-                          <CustomerController />
-                        </ErrorBoundary>
-                      }
-                    />
+                    {/* Main Homepage is the Restaurant Admin Login Page */}
+                    <Route path="/" element={<AdminLogin />} />
+
+                    {/* Customer Paths */}
                     <Route
                       path="/customer"
                       element={
@@ -350,7 +396,8 @@ export default function App() {
                       }
                     />
 
-                    {/* Admin Access Panel Paths */}
+                    {/* Restaurant Admin Access Panel Paths */}
+                    <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                     <Route path="/admin/login" element={<AdminLogin />} />
                     
                     <Route
@@ -391,6 +438,43 @@ export default function App() {
                         <AdminProtectedRoute>
                           <AdminSettings />
                         </AdminProtectedRoute>
+                      }
+                    />
+
+                    {/* Super Admin Access Paths */}
+                    <Route path="/superadmin" element={<SuperAdminLogin />} />
+                    <Route path="/super-admin" element={<Navigate to="/superadmin" replace />} />
+                    
+                    <Route
+                      path="/superadmin/dashboard"
+                      element={
+                        <SuperAdminProtectedRoute>
+                          <SuperAdminDashboard />
+                        </SuperAdminProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/superadmin/restaurants"
+                      element={
+                        <SuperAdminProtectedRoute>
+                          <SuperAdminRestaurants />
+                        </SuperAdminProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/superadmin/restaurants/:restaurantId"
+                      element={
+                        <SuperAdminProtectedRoute>
+                          <SuperAdminInspectRestaurant />
+                        </SuperAdminProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/superadmin/settings"
+                      element={
+                        <SuperAdminProtectedRoute>
+                          <SuperAdminSettings />
+                        </SuperAdminProtectedRoute>
                       }
                     />
 

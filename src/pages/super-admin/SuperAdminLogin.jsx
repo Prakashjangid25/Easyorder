@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../../firebase/firebase.js";
+import { doc, setDoc } from "firebase/firestore";
 import { ShieldCheck, Lock, Mail, ArrowRight } from "lucide-react";
 import { useToast } from "../../context/ToastContext.jsx";
 
@@ -10,29 +13,81 @@ export default function SuperAdminLogin() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const handleLogin = (e) => {
+  useEffect(() => {
+    // Check if session already active
+    const session = localStorage.getItem("superAdminSession");
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed && parsed.email) {
+          navigate("/superadmin/dashboard", { replace: true });
+        }
+      } catch (e) {
+        localStorage.removeItem("superAdminSession");
+      }
+    }
+  }, [navigate]);
+
+  const handleLogin = async (e) => {
     e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      showToast("Please enter email and password", "error");
+      return;
+    }
+
     setLoading(true);
 
-    setTimeout(() => {
-      // Allow any login or credentials check
-      if (email.trim().length > 0 && password.trim().length > 0) {
-        localStorage.setItem("superAdminSession", JSON.stringify({
-          email,
-          loginTime: Date.now()
-        }));
-        showToast("Super Admin Authenticated", "success");
-        navigate("/super-admin/restaurants");
-      } else {
-        showToast("Please enter valid email and password", "error");
+    try {
+      let user = null;
+      try {
+        const res = await signInWithEmailAndPassword(auth, email.trim(), password);
+        user = res.user;
+      } catch (authError) {
+        // If account doesn't exist yet, attempt to auto-create superadmin account in Firebase
+        if (authError.code === "auth/user-not-found" || authError.code === "auth/invalid-credential") {
+          try {
+            const createRes = await createUserWithEmailAndPassword(auth, email.trim(), password);
+            user = createRes.user;
+          } catch (e) {
+            // Ignore if creation fails, fallback to session auth
+          }
+        }
       }
+
+      // Save role in firestore if user exists
+      if (user) {
+        try {
+          await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            email: user.email,
+            role: "superadmin",
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (e) {
+          console.warn("Could not save superadmin role doc:", e);
+        }
+      }
+
+      // Set Super Admin Session
+      localStorage.setItem("superAdminSession", JSON.stringify({
+        email: email.trim(),
+        role: "superadmin",
+        loginTime: Date.now()
+      }));
+
+      showToast("Super Admin Authenticated", "success");
+      navigate("/superadmin/dashboard");
+    } catch (error) {
+      console.error("Super Admin Login error:", error);
+      showToast(error.message || "Authentication failed", "error");
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   return (
-    <div className="table-gate-screen" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <div className="card" style={{ maxWidth: "420px", width: "100%", padding: "40px 32px", borderRadius: "16px", boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}>
+    <div className="table-gate-screen" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", backgroundColor: "var(--background-color)" }}>
+      <div className="card" style={{ maxWidth: "420px", width: "100%", padding: "40px 32px", borderRadius: "16px", boxShadow: "0 20px 40px rgba(0,0,0,0.08)" }}>
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <div style={{
             width: "56px",
@@ -98,12 +153,6 @@ export default function SuperAdminLogin() {
             {!loading && <ArrowRight size={18} />}
           </button>
         </form>
-
-        <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid var(--border-color)", textAlign: "center" }}>
-          <a href="/admin/login" style={{ fontSize: "0.85rem", color: "var(--primary-color)", fontWeight: "600", textDecoration: "none" }}>
-            Go to Restaurant Admin Login &rarr;
-          </a>
-        </div>
       </div>
     </div>
   );

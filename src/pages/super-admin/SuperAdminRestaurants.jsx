@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { 
   Plus, 
   Store, 
@@ -14,10 +14,12 @@ import {
   Mail, 
   MapPin, 
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Eye,
+  Power
 } from "lucide-react";
 import SuperAdminSidebar from "../../components/super-admin/SuperAdminSidebar.jsx";
-import { getAllRestaurants, createRestaurant, updateRestaurant, deleteRestaurant } from "../../firebase/multiRestaurant.js";
+import { getAllRestaurants, createRestaurant, updateRestaurant, deleteRestaurant, DEFAULT_SETTINGS } from "../../firebase/multiRestaurant.js";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 
@@ -115,7 +117,7 @@ export default function SuperAdminRestaurants() {
     const newStatus = restaurant.status === "active" ? "inactive" : "active";
     try {
       await updateRestaurant(restaurant.id, { status: newStatus });
-      showToast(`Set "${restaurant.name}" to ${newStatus}`, "info");
+      showToast(`Set "${restaurant.name}" status to ${newStatus.toUpperCase()}`, "info");
       loadRestaurants();
     } catch (error) {
       showToast("Could not update status", "error");
@@ -128,7 +130,7 @@ export default function SuperAdminRestaurants() {
       return;
     }
 
-    if (window.confirm(`Are you sure you want to delete "${restaurant.name}"? This action cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to delete "${restaurant.name}"? All associated data will be removed. This action cannot be undone.`)) {
       try {
         await deleteRestaurant(restaurant.id);
         showToast(`Deleted restaurant "${restaurant.name}"`, "info");
@@ -206,13 +208,13 @@ export default function SuperAdminRestaurants() {
 
       <main style={{ flex: 1, padding: "32px", overflowY: "auto" }}>
         {/* Top Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
           <div>
             <h1 style={{ fontSize: "1.75rem", fontWeight: "800", color: "var(--text-primary)" }}>
               Restaurants Directory
             </h1>
             <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginTop: "4px" }}>
-              Manage registered restaurants, statuses, and admin credentials across the platform.
+              Manage registered restaurants, toggle statuses, and configure SaaS tenant accounts.
             </p>
           </div>
 
@@ -293,7 +295,7 @@ export default function SuperAdminRestaurants() {
         {/* Restaurants Cards Grid */}
         {loading ? (
           <div className="card" style={{ padding: "48px", textAlign: "center" }}>
-            <p style={{ color: "var(--text-muted)" }}>Loading restaurant registry...</p>
+            <p style={{ color: "var(--text-muted)" }}>Loading restaurant directory...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="card" style={{ padding: "48px", textAlign: "center" }}>
@@ -332,6 +334,7 @@ export default function SuperAdminRestaurants() {
                           backgroundColor: isActive ? "rgba(42, 157, 143, 0.15)" : "rgba(230, 57, 70, 0.15)",
                           color: isActive ? "#2a9d8f" : "#e63946"
                         }}
+                        title="Click to Activate/Deactivate"
                       >
                         {isActive ? "ACTIVE" : "INACTIVE"}
                       </button>
@@ -358,22 +361,42 @@ export default function SuperAdminRestaurants() {
 
                   {/* Action Buttons */}
                   <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "14px", display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "space-between" }}>
+                    <Link
+                      to={`/superadmin/restaurants/${r.id}`}
+                      className="btn btn-outline"
+                      style={{ fontSize: "0.8rem", padding: "8px 12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                      title="Open / Inspect Restaurant"
+                    >
+                      <Eye size={14} />
+                      <span>Open</span>
+                    </Link>
+
                     <button
                       onClick={() => handleOpenAdmin(r)}
                       className="btn btn-primary"
-                      style={{ flex: "1 1 auto", fontSize: "0.8rem", padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+                      style={{ flex: "1 1 auto", fontSize: "0.8rem", padding: "8px 12px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+                      title="Launch Restaurant Admin Panel"
                     >
                       <ExternalLink size={14} />
-                      <span>Manage Admin</span>
+                      <span>Admin Panel</span>
                     </button>
 
                     <button
                       onClick={() => openEditModal(r)}
                       className="btn btn-secondary"
                       style={{ padding: "8px", borderRadius: "6px" }}
-                      title="Edit Restaurant"
+                      title="Edit Restaurant Details"
                     >
                       <Edit2 size={14} />
+                    </button>
+
+                    <button
+                      onClick={() => handleToggleStatus(r)}
+                      className="btn btn-secondary"
+                      style={{ padding: "8px", borderRadius: "6px", color: isActive ? "#e63946" : "#2a9d8f" }}
+                      title={isActive ? "Deactivate Restaurant" : "Activate Restaurant"}
+                    >
+                      <Power size={14} />
                     </button>
 
                     <button
@@ -422,7 +445,7 @@ export default function SuperAdminRestaurants() {
                 </div>
 
                 <div>
-                  <label className="input-label">Custom Slug / ID (Optional)</label>
+                  <label className="input-label">Restaurant ID / Slug (Optional)</label>
                   <input
                     type="text"
                     className="input-field"
@@ -444,19 +467,20 @@ export default function SuperAdminRestaurants() {
                     />
                   </div>
                   <div>
-                    <label className="input-label">Admin Password</label>
+                    <label className="input-label">Admin Password *</label>
                     <input
                       type="text"
                       className="input-field"
                       value={formData.adminPassword}
                       onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
+                      required
                     />
                   </div>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
-                    <label className="input-label">Phone Number</label>
+                    <label className="input-label">Restaurant Phone</label>
                     <input
                       type="text"
                       className="input-field"
@@ -465,7 +489,7 @@ export default function SuperAdminRestaurants() {
                     />
                   </div>
                   <div>
-                    <label className="input-label">Status</label>
+                    <label className="input-label">Restaurant Status</label>
                     <select
                       className="input-field"
                       value={formData.status}
@@ -478,7 +502,7 @@ export default function SuperAdminRestaurants() {
                 </div>
 
                 <div>
-                  <label className="input-label">Address</label>
+                  <label className="input-label">Restaurant Address</label>
                   <input
                     type="text"
                     className="input-field"
@@ -488,7 +512,7 @@ export default function SuperAdminRestaurants() {
                 </div>
 
                 <div>
-                  <label className="input-label">Logo Image URL</label>
+                  <label className="input-label">Restaurant Logo URL</label>
                   <input
                     type="url"
                     className="input-field"
@@ -498,7 +522,11 @@ export default function SuperAdminRestaurants() {
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "16px" }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowCreateModal(false)}
+                  >
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary" style={{ fontWeight: "700" }}>
@@ -515,7 +543,7 @@ export default function SuperAdminRestaurants() {
           <div className="modal-backdrop" style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
             <div className="card" style={{ maxWidth: "540px", width: "100%", maxHeight: "90vh", overflowY: "auto", padding: "32px", borderRadius: "16px" }}>
               <h2 style={{ fontSize: "1.3rem", fontWeight: "800", marginBottom: "20px" }}>Edit Restaurant Details</h2>
-
+              
               <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
                   <label className="input-label">Restaurant Name</label>
@@ -536,6 +564,7 @@ export default function SuperAdminRestaurants() {
                       className="input-field"
                       value={formData.adminEmail}
                       onChange={(e) => setFormData({ ...formData, adminEmail: e.target.value })}
+                      required
                     />
                   </div>
                   <div>
@@ -552,7 +581,7 @@ export default function SuperAdminRestaurants() {
                 </div>
 
                 <div>
-                  <label className="input-label">Phone Number</label>
+                  <label className="input-label">Phone</label>
                   <input
                     type="text"
                     className="input-field"
@@ -582,7 +611,11 @@ export default function SuperAdminRestaurants() {
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "16px" }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setEditingRestaurant(null)}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setEditingRestaurant(null)}
+                  >
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary" style={{ fontWeight: "700" }}>
@@ -597,19 +630,19 @@ export default function SuperAdminRestaurants() {
         {/* RESET PASSWORD MODAL */}
         {resetPassModal && (
           <div className="modal-backdrop" style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-            <div className="card" style={{ maxWidth: "420px", width: "100%", padding: "28px", borderRadius: "16px" }}>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: "800", marginBottom: "8px" }}>Reset Password</h3>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "20px" }}>
-                Set a new admin password for <strong>{resetPassModal.name}</strong>.
+            <div className="card" style={{ maxWidth: "420px", width: "100%", padding: "32px", borderRadius: "16px" }}>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "800", marginBottom: "12px" }}>Reset Admin Password</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "20px" }}>
+                Set a new access password for <strong>{resetPassModal.name}</strong> ({resetPassModal.adminEmail}).
               </p>
 
               <form onSubmit={handleResetPasswordSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
                   <label className="input-label">New Password</label>
                   <input
-                    type="text"
+                    type="password"
                     className="input-field"
-                    placeholder="Enter new password"
+                    placeholder="Enter new admin password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
@@ -617,7 +650,11 @@ export default function SuperAdminRestaurants() {
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "12px" }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setResetPassModal(null)}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setResetPassModal(null)}
+                  >
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary" style={{ fontWeight: "700" }}>

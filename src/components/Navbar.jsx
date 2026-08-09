@@ -14,11 +14,16 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Hide global navbar entirely inside Super Admin pages
+  if (location.pathname.startsWith("/superadmin") || location.pathname.startsWith("/super-admin")) {
+    return null;
+  }
+
   const handleAdminLogout = async () => {
     try {
       localStorage.removeItem("adminLoginTimestamp");
       await signOut(auth);
-      navigate("/admin/login");
+      navigate("/");
     } catch (error) {
       console.error("Logout error: ", error);
     }
@@ -76,7 +81,7 @@ export default function Navbar() {
               onClick={() => {
                 if (window.confirm("Do you want to switch or leave your table?")) {
                   clearTableNumber();
-                  navigate("/");
+                  navigate("/customer");
                 }
               }}
             >

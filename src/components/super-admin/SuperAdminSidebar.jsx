@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Store, Settings, LogOut, ExternalLink, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Store, Settings, LogOut, ShieldCheck } from "lucide-react";
 import { useToast } from "../../context/ToastContext.jsx";
 
 export default function SuperAdminSidebar() {
@@ -11,17 +11,17 @@ export default function SuperAdminSidebar() {
   const handleLogout = () => {
     localStorage.removeItem("superAdminSession");
     showToast("Signed out from Super Admin panel", "info");
-    navigate("/super-admin/login");
+    navigate("/superadmin");
   };
 
   const menuItems = [
-    { label: "Overview", icon: <LayoutDashboard size={18} />, path: "/super-admin" },
-    { label: "Restaurants", icon: <Store size={18} />, path: "/super-admin/restaurants" },
-    { label: "Platform Settings", icon: <Settings size={18} />, path: "/super-admin/settings" }
+    { label: "Dashboard", icon: <LayoutDashboard size={18} />, path: "/superadmin/dashboard" },
+    { label: "Restaurants", icon: <Store size={18} />, path: "/superadmin/restaurants" },
+    { label: "Settings", icon: <Settings size={18} />, path: "/superadmin/settings" }
   ];
 
   return (
-    <aside className="admin-sidebar" id="super-admin-sidebar" style={{ width: "260px", flexShrink: 0 }}>
+    <aside className="admin-sidebar" id="super-admin-sidebar" style={{ width: "250px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
       {/* Brand Header */}
       <div className="sidebar-brand" style={{ padding: "24px 20px", borderBottom: "1px solid var(--border-color)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -49,9 +49,9 @@ export default function SuperAdminSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav style={{ padding: "16px 12px", display: "flex", flexDirection: "column", gap: "4px" }}>
+      <nav style={{ padding: "16px 12px", display: "flex", flexDirection: "column", gap: "6px" }}>
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path || (item.path !== "/super-admin" && location.pathname.startsWith(item.path));
+          const isActive = location.pathname === item.path || (item.path !== "/superadmin/dashboard" && location.pathname.startsWith(item.path));
           return (
             <Link
               key={item.path}
@@ -77,28 +77,8 @@ export default function SuperAdminSidebar() {
         })}
       </nav>
 
-      {/* Quick Link to Restaurant Admin */}
+      {/* Logout Action */}
       <div style={{ marginTop: "auto", padding: "16px 12px", borderTop: "1px solid var(--border-color)" }}>
-        <Link
-          to="/admin/dashboard"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "10px 14px",
-            borderRadius: "8px",
-            backgroundColor: "var(--surface-hover, rgba(0,0,0,0.03))",
-            color: "var(--text-primary)",
-            fontSize: "0.85rem",
-            fontWeight: "600",
-            textDecoration: "none",
-            marginBottom: "10px"
-          }}
-        >
-          <span>Open Restaurant Admin</span>
-          <ExternalLink size={14} />
-        </Link>
-
         <button
           onClick={handleLogout}
           style={{
@@ -106,7 +86,7 @@ export default function SuperAdminSidebar() {
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            padding: "10px 14px",
+            padding: "12px 16px",
             borderRadius: "8px",
             border: "1px solid var(--border-color)",
             backgroundColor: "transparent",
@@ -117,7 +97,7 @@ export default function SuperAdminSidebar() {
           }}
         >
           <LogOut size={16} />
-          <span>Sign Out</span>
+          <span>Logout</span>
         </button>
       </div>
     </aside>
