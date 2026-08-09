@@ -14,13 +14,17 @@ export default function AdminTables() {
   const [selectedTableQR, setSelectedTableQR] = useState(null);
 
   const { showToast } = useToast();
-  const { settings } = useSettings();
+  const { settings, activeRestaurantId } = useSettings();
 
-  // Get current App URL from environment variables, fallback to window.location.origin
   const appBaseUrl = window.location.origin;
 
+  const tablesColPath = activeRestaurantId && activeRestaurantId !== "default"
+    ? `restaurants/${activeRestaurantId}/tables`
+    : "tables";
+
   useEffect(() => {
-    const q = query(collection(db, "tables"), orderBy("name", "asc"));
+    setLoading(true);
+    const q = query(collection(db, tablesColPath), orderBy("name", "asc"));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -38,7 +42,7 @@ export default function AdminTables() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [activeRestaurantId, tablesColPath]);
 
   const handleAddTable = async (e) => {
     e.preventDefault();
@@ -48,7 +52,6 @@ export default function AdminTables() {
       return;
     }
 
-    // Check if table name already exists
     const exists = tables.some((t) => t.name.toLowerCase() === cleanName.toLowerCase());
     if (exists) {
       showToast("This table already exists!", "error");
@@ -56,7 +59,8 @@ export default function AdminTables() {
     }
 
     try {
-      await addDoc(collection(db, "tables"), {
+      await addDoc(collection(db, tablesColPath), {
+        restaurantId: activeRestaurantId,
         name: cleanName,
         createdAt: new Date().toISOString()
       });
@@ -70,7 +74,7 @@ export default function AdminTables() {
   const handleDeleteTable = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete ${name}? Customers will no longer be able to order from this table.`)) {
       try {
-        await deleteDoc(doc(db, "tables", id));
+        await deleteDoc(doc(db, tablesColPath, id));
         showToast(`${name} deleted`, "success");
         if (selectedTableQR && selectedTableQR.id === id) {
           setSelectedTableQR(null);
@@ -83,6 +87,9 @@ export default function AdminTables() {
 
   // Construct the scanning URL for QR code
   const getTableScanUrl = (name) => {
+    if (activeRestaurantId && activeRestaurantId !== "default") {
+      return `${appBaseUrl}/${activeRestaurantId}/menu?table=${encodeURIComponent(name)}`;
+    }
     return `${appBaseUrl}/customer?table=${encodeURIComponent(name)}`;
   };
 
@@ -107,7 +114,9 @@ export default function AdminTables() {
       <main className="admin-content-area" id="admin-tables-content">
         <div className="dashboard-header" id="admin-tables-header">
           <div>
-            <h1 style={{ fontSize: "2rem" }}>Table & QR Manager</h1>
+            <h1 style={{ fontSize: "2rem" }}>
+              {settings.restaurantName ? `${settings.restaurantName} - Table & QR Manager` : "Table & QR Manager"}
+            </h1>
             <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
               Register dining tables, download dynamic QR code tags, and monitor active customer terminals.
             </p>
@@ -118,7 +127,7 @@ export default function AdminTables() {
         <div className="grid" style={{ gridTemplateColumns: "1.2fr 1fr", gap: "32px", alignItems: "start" }}>
           {/* Create Table Form & List */}
           <div className="card" id="tables-list-panel">
-            <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignCenter: "center", gap: "8px" }}>
+            <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
               <Table size={18} /> Dining Tables
             </h2>
 
@@ -136,7 +145,7 @@ export default function AdminTables() {
                 />
               </div>
 
-              <button type="submit" className="btn btn-secondary" style={{ padding: "12px 20px" }}>
+              <button type="submit" className="btn btn-primary" style={{ padding: "12px 20px", fontWeight: "700" }}>
                 <Plus size={16} /> Add Table
               </button>
             </form>
@@ -162,7 +171,7 @@ export default function AdminTables() {
                     <div>
                       <span style={{ fontWeight: "700", fontSize: "1rem" }}>{t.name}</span>
                       <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                        URL: {getTableScanUrl(t.name).slice(0, 30)}...
+                        URL: {getTableScanUrl(t.name).slice(0, 35)}...
                       </span>
                     </div>
 
@@ -199,7 +208,7 @@ export default function AdminTables() {
                 </div>
 
                 <div className="flex gap-2 justify-center">
-                  <button className="btn btn-secondary" onClick={handlePrintQR} style={{ gap: "8px" }} id="print-qr-code-btn">
+                  <button className="btn btn-primary" onClick={handlePrintQR} style={{ gap: "8px", fontWeight: "700" }} id="print-qr-code-btn">
                     <Printer size={16} /> Print Sticker
                   </button>
                   <button className="btn btn-outline" onClick={() => copyToClipboard(getTableScanUrl(selectedTableQR.name))} style={{ gap: "8px" }}>
@@ -213,7 +222,7 @@ export default function AdminTables() {
                     href={getTableScanUrl(selectedTableQR.name)}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ fontSize: "0.85rem", color: "var(--secondary-color)", display: "flex", alignCenter: "center", justifyCenter: "center", gap: "4px", fontWeight: "600" }}
+                    style={{ fontSize: "0.85rem", color: "var(--secondary-color)", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontWeight: "600" }}
                   >
                     Open Link <ExternalLink size={12} />
                   </a>
@@ -235,13 +244,13 @@ export default function AdminTables() {
             <div style={{ border: "2px solid #000", padding: "20px", borderRadius: "10px", textAlign: "center", width: "70mm", margin: "auto" }}>
               <h2 style={{ margin: "0 0 10px 0", fontSize: "18px", textTransform: "uppercase" }}>{settings?.restaurantName || "EasyOrder"}</h2>
               <p style={{ margin: "0 0 15px 0", fontSize: "14px" }}>Scan to Order Food</p>
-              
+
               <img
                 src={getQrCodeApiUrl(selectedTableQR.name)}
                 alt="Print QR"
                 style={{ width: "55mm", height: "55mm", display: "block", margin: "auto" }}
               />
-              
+
               <h1 style={{ margin: "15px 0 0 0", fontSize: "24px", letterSpacing: "1px" }}>{selectedTableQR.name.toUpperCase()}</h1>
               <p style={{ fontSize: "10px", color: "#666", marginTop: "5px" }}>Powered by EasyOrder</p>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, onSnapshot, query, orderBy, where } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { useCart } from "../../context/CartContext.jsx";
 import { useSettings } from "../../context/SettingsContext.jsx";
@@ -16,14 +16,24 @@ export default function RestaurantMenu() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const { settings } = useSettings();
+  const { settings, activeRestaurantId } = useSettings();
   const { theme } = useTheme();
   const { cart, addToCart, removeFromCart, getCartCount, getCartTotal, clearTableNumber } = useCart();
   const navigate = useNavigate();
 
-  // Listen to Categories in real-time
+  const catsColPath = activeRestaurantId && activeRestaurantId !== "default"
+    ? `restaurants/${activeRestaurantId}/categories`
+    : "categories";
+
+  const prodsColPath = activeRestaurantId && activeRestaurantId !== "default"
+    ? `restaurants/${activeRestaurantId}/products`
+    : "products";
+
+  // Listen to Categories and Products in real-time
   useEffect(() => {
-    const categoriesQuery = query(collection(db, "categories"), orderBy("sortOrder", "asc"));
+    setLoading(true);
+
+    const categoriesQuery = query(collection(db, catsColPath), orderBy("sortOrder", "asc"));
     const unsubscribeCats = onSnapshot(categoriesQuery, (snapshot) => {
       const list = [];
       snapshot.forEach((doc) => {
@@ -34,8 +44,7 @@ export default function RestaurantMenu() {
       console.error("Categories read error:", err);
     });
 
-    // Listen to Products in real-time
-    const productsQuery = query(collection(db, "products"), orderBy("sortOrder", "asc"));
+    const productsQuery = query(collection(db, prodsColPath), orderBy("sortOrder", "asc"));
     const unsubscribeProds = onSnapshot(productsQuery, (snapshot) => {
       const list = [];
       snapshot.forEach((doc) => {
@@ -52,12 +61,11 @@ export default function RestaurantMenu() {
       unsubscribeCats();
       unsubscribeProds();
     };
-  }, []);
+  }, [activeRestaurantId, catsColPath, prodsColPath]);
 
   // Filter products based on search and selected category
   const filteredProducts = products.filter((p) => {
-    // Only show available products to customers
-    if (!p.isAvailable) return false;
+    if (p.isAvailable === false) return false;
 
     const matchesCategory = selectedCategory === "all" || p.categoryId === selectedCategory;
     const matchesSearch =
@@ -107,25 +115,25 @@ export default function RestaurantMenu() {
       <div
         className="hero-banner"
         style={{
-          backgroundImage: `url(${settings.restaurantBanner})`,
+          backgroundImage: `url(${settings.restaurantBanner || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop"})`,
         }}
         id="menu-hero-banner"
       >
         <div className="hero-overlay"></div>
         <div className="hero-content">
-          <h1 className="hero-title">{settings.restaurantName}</h1>
+          <h1 className="hero-title">{settings.restaurantName || "Our Restaurant"}</h1>
           <p className="hero-subtitle">
             {settings.isOpen ? (
               <span style={{ color: "#10b981", fontWeight: "600" }}>● We are Open • Serving Fresh</span>
             ) : (
               <span style={{ color: "#ef4444", fontWeight: "600" }}>● Temporarily Closed • Pre-orders only</span>
             )}
-            {` • Hours: ${settings.openingTime} - ${settings.closingTime}`}
+            {` • Hours: ${settings.openingTime || "10:00"} - ${settings.closingTime || "22:00"}`}
           </p>
         </div>
       </div>
 
-      {/* Modern Search & Search Badges */}
+      {/* Modern Search */}
       <div className="search-bar-wrapper" id="menu-search-wrapper">
         <div className="search-input-container">
           <Search className="search-icon-left" size={18} />
@@ -217,7 +225,7 @@ export default function RestaurantMenu() {
                   {/* Pricing and Tap targets Action */}
                   <div className="product-price-action">
                     <span className="product-price">{formatCurrency(p.price)}</span>
-                    
+
                     {qty > 0 ? (
                       <div className="quantity-selector">
                         <button
@@ -239,7 +247,7 @@ export default function RestaurantMenu() {
                     ) : (
                       <button
                         className="btn btn-primary"
-                        style={{ padding: "8px 16px", borderRadius: "20px", fontSize: "0.85rem" }}
+                        style={{ padding: "8px 16px", borderRadius: "20px", fontSize: "0.85rem", fontWeight: "700" }}
                         onClick={() => addToCart(p)}
                         id={`add-to-cart-btn-${p.id}`}
                       >

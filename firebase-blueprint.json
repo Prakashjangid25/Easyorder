@@ -1,8 +1,29 @@
 {
   "entities": {
+    "Restaurant": {
+      "title": "Restaurant",
+      "description": "A restaurant organization profile created by Super Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "adminEmail": { "type": "string" },
+        "adminPassword": { "type": "string" },
+        "logo": { "type": "string" },
+        "banner": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "primaryColor": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "slug", "adminEmail", "status"]
+    },
     "Setting": {
       "title": "Setting",
-      "description": "Global restaurant settings controlling branding, hours, contact, and active state.",
+      "description": "Restaurant settings controlling branding, hours, contact, and active state.",
       "type": "object",
       "properties": {
         "restaurantName": { "type": "string" },
@@ -29,6 +50,7 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "restaurantId": { "type": "string" },
         "name": { "type": "string" },
         "sortOrder": { "type": "number" },
         "createdAt": { "type": "string" }
@@ -41,6 +63,7 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "restaurantId": { "type": "string" },
         "categoryId": { "type": "string" },
         "name": { "type": "string" },
         "description": { "type": "string" },
@@ -61,7 +84,9 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "restaurantId": { "type": "string" },
         "name": { "type": "string" },
+        "isActive": { "type": "boolean" },
         "createdAt": { "type": "string" }
       },
       "required": ["name"]
@@ -72,6 +97,7 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "restaurantId": { "type": "string" },
         "tableNumber": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "preparing", "ready", "completed", "cancelled"] },
         "customerNotes": { "type": "string" },
@@ -87,6 +113,7 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "restaurantId": { "type": "string" },
         "orderId": { "type": "string" },
         "productId": { "type": "string" },
         "name": { "type": "string" },
@@ -97,29 +124,57 @@
     }
   },
   "firestore": {
+    "/restaurants/{restaurantId}": {
+      "schema": "Restaurant",
+      "description": "Restaurant profile documents."
+    },
+    "/restaurants/{restaurantId}/settings/{settingId}": {
+      "schema": "Setting",
+      "description": "Settings for a specific restaurant."
+    },
+    "/restaurants/{restaurantId}/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product categories for a specific restaurant."
+    },
+    "/restaurants/{restaurantId}/products/{productId}": {
+      "schema": "Product",
+      "description": "Menu products for a specific restaurant."
+    },
+    "/restaurants/{restaurantId}/tables/{tableId}": {
+      "schema": "Table",
+      "description": "Tables for a specific restaurant."
+    },
+    "/restaurants/{restaurantId}/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Orders for a specific restaurant."
+    },
+    "/restaurants/{restaurantId}/orderItems/{orderItemId}": {
+      "schema": "OrderItem",
+      "description": "Order items for a specific restaurant."
+    },
     "/settings/{settingId}": {
       "schema": "Setting",
-      "description": "Global settings configuration document."
+      "description": "Root settings configuration fallback."
     },
     "/categories/{categoryId}": {
       "schema": "Category",
-      "description": "Product categories."
+      "description": "Root product categories fallback."
     },
     "/products/{productId}": {
       "schema": "Product",
-      "description": "Menu products list."
+      "description": "Root menu products fallback."
     },
     "/tables/{tableId}": {
       "schema": "Table",
-      "description": "List of valid active tables."
+      "description": "Root tables list fallback."
     },
     "/orders/{orderId}": {
       "schema": "Order",
-      "description": "Active and historical customer orders."
+      "description": "Root customer orders fallback."
     },
     "/orderItems/{orderItemId}": {
       "schema": "OrderItem",
-      "description": "Details for items inside each order."
+      "description": "Root order items fallback."
     }
   }
 }

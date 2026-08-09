@@ -6,6 +6,7 @@ import { IndianRupee, Clock, CheckCircle, ShoppingCart, Ban, CookingPot, Flame, 
 import { StatCardSkeleton, TableRowSkeleton } from "../../components/SkeletonLoader.jsx";
 import { formatCurrency } from "../../utils/format.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useSettings } from "../../context/SettingsContext.jsx";
 import { playNewOrderChime } from "../../utils/audio.js";
 
 export default function AdminDashboard() {
@@ -13,12 +14,22 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   const { showToast } = useToast();
+  const { settings, activeRestaurantId } = useSettings();
+
   const knownOrderIds = useRef(new Set());
   const initialLoadDone = useRef(false);
 
   useEffect(() => {
+    setLoading(true);
+    initialLoadDone.current = false;
+    knownOrderIds.current = new Set();
+
+    const ordersColPath = activeRestaurantId && activeRestaurantId !== "default"
+      ? `restaurants/${activeRestaurantId}/orders`
+      : "orders";
+
     // Read all orders in real-time
-    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, ordersColPath), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -44,12 +55,10 @@ export default function AdminDashboard() {
         // Trigger alerts for newly received orders
         if (newOrdersToAlert.length > 0) {
           newOrdersToAlert.forEach((order, index) => {
-            // Play sound with a small staggered delay if multiple new orders arrive together
             setTimeout(() => {
               playNewOrderChime();
             }, index * 350);
 
-            // Display modern success green style popup in top-right
             showToast(
               "🟢 New Order Received",
               "new-order",
@@ -69,12 +78,12 @@ export default function AdminDashboard() {
     );
 
     return () => unsubscribe();
-  }, [showToast]);
+  }, [activeRestaurantId, showToast]);
 
   // Compute stats helper
   const getStats = () => {
     const today = new Date().toLocaleDateString();
-    
+
     const todayOrders = orders.filter((o) => {
       if (!o.createdAt) return false;
       const oDate = new Date(o.createdAt).toLocaleDateString();
@@ -93,7 +102,6 @@ export default function AdminDashboard() {
     // Aggregate popular products
     const itemSales = {};
     orders.forEach((order) => {
-      // Only count completed/preparing/ready orders for sales stats!
       if (order.status !== "cancelled" && order.items) {
         order.items.forEach((item) => {
           if (!itemSales[item.name]) {
@@ -126,13 +134,15 @@ export default function AdminDashboard() {
   return (
     <div className="admin-shell" id="admin-dashboard-container">
       <AdminSidebar />
-      
+
       <main className="admin-content-area" id="admin-dashboard-content">
         <div className="dashboard-header" id="admin-dashboard-header">
           <div>
-            <h1 style={{ fontSize: "2rem" }}>Restaurant Overview</h1>
+            <h1 style={{ fontSize: "2rem" }}>
+              {settings.restaurantName ? `${settings.restaurantName} Overview` : "Restaurant Overview"}
+            </h1>
             <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-              Monitor live performance, customer orders, and sales trends.
+              Monitor live performance, customer orders, and sales trends in INR (₹).
             </p>
           </div>
           <div className="badge" style={{ backgroundColor: "var(--surface-color)", border: "1px solid var(--border-color)", padding: "10px 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600" }}>
@@ -199,7 +209,7 @@ export default function AdminDashboard() {
         <div className="grid-2" style={{ marginTop: "24px" }} id="admin-dashboard-bento-grid">
           {/* Section: Live Queue Tracker */}
           <div className="card" id="dashboard-queue-card">
-            <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignCenter: "center", gap: "8px" }}>
+            <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
               <Clock size={18} /> Order Queue Breakdowns
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -222,7 +232,7 @@ export default function AdminDashboard() {
 
           {/* Section: Popular Items Aggregate */}
           <div className="card" id="dashboard-popular-items-card">
-            <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignCenter: "center", gap: "8px" }}>
+            <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
               <Award size={18} /> Best Sellers (Popular Items)
             </h2>
             {stats.popularItems.length > 0 ? (

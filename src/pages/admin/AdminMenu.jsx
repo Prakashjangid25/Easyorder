@@ -3,6 +3,7 @@ import AdminSidebar from "./AdminSidebar.jsx";
 import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useSettings } from "../../context/SettingsContext.jsx";
 import { Plus, Edit, Trash2, Tag, Utensils, ToggleLeft, ToggleRight, Search, Upload, Check, AlertCircle } from "lucide-react";
 import { handleFirestoreError, OperationType } from "../../firebase/errorHandler.js";
 import { formatCurrency } from "../../utils/format.js";
@@ -11,6 +12,9 @@ export default function AdminMenu() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const { showToast } = useToast();
+  const { settings, activeRestaurantId } = useSettings();
 
   // Forms states
   const [categoryName, setCategoryName] = useState("");
@@ -27,18 +31,26 @@ export default function AdminMenu() {
   const [productIsAvailable, setProductIsAvailable] = useState(true);
   const [productIsBestSeller, setProductIsBestSeller] = useState(false);
   const [productIsPopular, setProductIsPopular] = useState(false);
-  
+
   const [editingProduct, setEditingProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCatFilter, setSelectedCatFilter] = useState("all");
 
-  const { showToast } = useToast();
+  const catsColPath = activeRestaurantId && activeRestaurantId !== "default"
+    ? `restaurants/${activeRestaurantId}/categories`
+    : "categories";
+
+  const prodsColPath = activeRestaurantId && activeRestaurantId !== "default"
+    ? `restaurants/${activeRestaurantId}/products`
+    : "products";
 
   // Listen to Categories and Products
   useEffect(() => {
-    const catsQuery = query(collection(db, "categories"), orderBy("sortOrder", "asc"));
+    setLoading(true);
+
+    const catsQuery = query(collection(db, catsColPath), orderBy("sortOrder", "asc"));
     const unsubscribeCats = onSnapshot(catsQuery, (snap) => {
       const list = [];
       snap.forEach((doc) => {
@@ -47,7 +59,7 @@ export default function AdminMenu() {
       setCategories(list);
     }, (err) => console.error(err));
 
-    const prodsQuery = query(collection(db, "products"), orderBy("sortOrder", "asc"));
+    const prodsQuery = query(collection(db, prodsColPath), orderBy("sortOrder", "asc"));
     const unsubscribeProds = onSnapshot(prodsQuery, (snap) => {
       const list = [];
       snap.forEach((doc) => {
@@ -61,7 +73,7 @@ export default function AdminMenu() {
       unsubscribeCats();
       unsubscribeProds();
     };
-  }, []);
+  }, [activeRestaurantId, catsColPath, prodsColPath]);
 
   // Helper to convert uploaded files to base64 string
   const handleImageUpload = (e) => {
@@ -91,8 +103,7 @@ export default function AdminMenu() {
 
     try {
       if (editingCategory) {
-        // Edit Mode
-        const catRef = doc(db, "categories", editingCategory.id);
+        const catRef = doc(db, catsColPath, editingCategory.id);
         await updateDoc(catRef, {
           name: categoryName.trim(),
           sortOrder: Number(categorySortOrder)
@@ -100,8 +111,8 @@ export default function AdminMenu() {
         showToast("Category updated successfully", "success");
         setEditingCategory(null);
       } else {
-        // Add Mode
-        await addDoc(collection(db, "categories"), {
+        await addDoc(collection(db, catsColPath), {
+          restaurantId: activeRestaurantId,
           name: categoryName.trim(),
           sortOrder: Number(categorySortOrder),
           createdAt: new Date().toISOString()
@@ -122,9 +133,9 @@ export default function AdminMenu() {
   };
 
   const handleDeleteCategory = async (id) => {
-    if (window.confirm("Are you sure? This will delete the category but not the products associated. You should re-assign them.")) {
+    if (window.confirm("Are you sure? This will delete the category.")) {
       try {
-        await deleteDoc(doc(db, "categories", id));
+        await deleteDoc(doc(db, catsColPath, id));
         showToast("Category deleted", "success");
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `categories/${id}`);
@@ -141,6 +152,7 @@ export default function AdminMenu() {
     }
 
     const payload = {
+      restaurantId: activeRestaurantId,
       categoryId: productCategoryId,
       name: productName.trim(),
       description: productDesc.trim(),
@@ -155,12 +167,12 @@ export default function AdminMenu() {
 
     try {
       if (editingProduct) {
-        const prodRef = doc(db, "products", editingProduct.id);
+        const prodRef = doc(db, prodsColPath, editingProduct.id);
         await updateDoc(prodRef, payload);
         showToast("Product updated successfully", "success");
         setEditingProduct(null);
       } else {
-        await addDoc(collection(db, "products"), {
+        await addDoc(collection(db, prodsColPath), {
           ...payload,
           createdAt: new Date().toISOString()
         });
@@ -191,7 +203,7 @@ export default function AdminMenu() {
   const handleDeleteProduct = async (id) => {
     if (window.confirm("Are you sure you want to delete this menu item?")) {
       try {
-        await deleteDoc(doc(db, "products", id));
+        await deleteDoc(doc(db, prodsColPath, id));
         showToast("Product deleted successfully", "success");
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `products/${id}`);
@@ -201,7 +213,7 @@ export default function AdminMenu() {
 
   const toggleAvailability = async (prod) => {
     try {
-      const prodRef = doc(db, "products", prod.id);
+      const prodRef = doc(db, prodsColPath, prod.id);
       await updateDoc(prodRef, { isAvailable: !prod.isAvailable });
       showToast(`${prod.name} is now ${!prod.isAvailable ? "Available" : "Unavailable"}`, "success");
     } catch (error) {
@@ -243,19 +255,21 @@ export default function AdminMenu() {
       <main className="admin-content-area" id="admin-menu-content">
         <div className="dashboard-header" id="admin-menu-header">
           <div>
-            <h1 style={{ fontSize: "2rem" }}>Menu Manager</h1>
+            <h1 style={{ fontSize: "2rem" }}>
+              {settings.restaurantName ? `${settings.restaurantName} - Menu Manager` : "Menu Manager"}
+            </h1>
             <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-              Define categories, edit pricing, toggle availability, and structure your food menu.
+              Define categories, edit pricing in ₹ (INR), toggle availability, and structure your food menu.
             </p>
           </div>
 
           <button
-            className="btn btn-secondary"
+            className="btn btn-primary"
             onClick={() => {
               resetProductForm();
               setShowProductModal(true);
             }}
-            style={{ gap: "8px" }}
+            style={{ gap: "8px", fontWeight: "700" }}
             id="add-new-product-btn"
           >
             <Plus size={16} /> Add Menu Item
@@ -264,10 +278,10 @@ export default function AdminMenu() {
 
         {/* Layout Grid */}
         <div className="grid" style={{ gridTemplateColumns: "1fr 2.5fr", gap: "32px", alignItems: "start" }}>
-          
+
           {/* LEFT PANEL: Category CRUD Form and List */}
           <div className="card" id="categories-crud-panel">
-            <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignCenter: "center", gap: "8px" }}>
+            <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
               <Tag size={18} /> Categories
             </h2>
 
@@ -298,7 +312,7 @@ export default function AdminMenu() {
               </div>
 
               <div className="flex gap-1" style={{ width: "100%" }}>
-                <button type="submit" className="btn btn-secondary" style={{ flex: 1, padding: "10px", fontSize: "0.9rem" }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: "10px", fontSize: "0.9rem", fontWeight: "700" }}>
                   {editingCategory ? "Update" : "Add Category"}
                 </button>
                 {editingCategory && (
@@ -400,7 +414,7 @@ export default function AdminMenu() {
                   <tr>
                     <th>Dish Details</th>
                     <th>Category</th>
-                    <th>Price</th>
+                    <th>Price (₹)</th>
                     <th>Available</th>
                     <th style={{ textAlign: "right" }}>Actions</th>
                   </tr>
@@ -409,18 +423,18 @@ export default function AdminMenu() {
                   {filteredProducts.length > 0 ? (
                     filteredProducts.map((p) => (
                       <tr key={p.id} id={`product-row-${p.id}`}>
-                        <td style={{ display: "flex", alignCenter: "center", gap: "16px" }}>
+                        <td style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                           <img
                             src={p.imageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop"}
                             alt={p.name}
                             onError={(e) => {
                               e.target.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop";
                             }}
-                            style={{ width: "44px", height: "44px", borderRadius: "4px", objectFit: "cover" }}
+                            style={{ width: "44px", height: "44px", borderRadius: "8px", objectFit: "cover" }}
                           />
                           <div>
-                            <div style={{ fontWeight: "600", display: "flex", alignCenter: "center", gap: "6px" }}>
-                              <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", backgroundColor: p.isVeg ? "var(--status-veg)" : "var(--status-nonveg)" }}></span>
+                            <div style={{ fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", backgroundColor: p.isVeg ? "var(--status-veg)" : "var(--status-nonveg)" }}></span>
                               {p.name}
                             </div>
                             <div style={{ display: "flex", gap: "4px", marginTop: "4px" }}>
@@ -436,7 +450,7 @@ export default function AdminMenu() {
                           {formatCurrency(p.price)}
                         </td>
                         <td>
-                          <button onClick={() => toggleAvailability(p)} style={{ color: p.isAvailable ? "var(--status-completed)" : "var(--text-muted)" }}>
+                          <button onClick={() => toggleAvailability(p)} style={{ color: p.isAvailable ? "var(--status-completed)" : "var(--text-muted)", cursor: "pointer", border: "none", background: "none" }}>
                             {p.isAvailable ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
                           </button>
                         </td>
@@ -485,7 +499,7 @@ export default function AdminMenu() {
               </div>
 
               <form onSubmit={handleSaveProduct} className="flex flex-col gap-2">
-                
+
                 {/* Categorization */}
                 <div className="input-group">
                   <label className="input-label" htmlFor="prod-category-select">Category (Required)</label>
@@ -511,7 +525,7 @@ export default function AdminMenu() {
                       id="prod-name"
                       type="text"
                       className="input-field"
-                      placeholder="e.g. Garlic Naan"
+                      placeholder="e.g. Paneer Tikka Grill"
                       value={productName}
                       onChange={(e) => setProductName(e.target.value)}
                       required
@@ -524,9 +538,9 @@ export default function AdminMenu() {
                     <input
                       id="prod-price"
                       type="number"
-                      step="0.01"
+                      step="1"
                       className="input-field"
-                      placeholder="199"
+                      placeholder="280"
                       value={productPrice}
                       onChange={(e) => setProductPrice(e.target.value)}
                       required
@@ -651,7 +665,7 @@ export default function AdminMenu() {
 
                 {/* Actions */}
                 <div className="flex gap-2" style={{ marginTop: "16px", borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
-                  <button type="submit" className="btn btn-secondary" style={{ flex: 1 }}>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1, fontWeight: "700" }}>
                     {editingProduct ? "Save Changes" : "Create Food Dish"}
                   </button>
                   <button type="button" className="btn btn-outline" style={{ flex: 0.5 }} onClick={() => setShowProductModal(false)}>

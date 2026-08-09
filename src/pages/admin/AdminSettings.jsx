@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar.jsx";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { Settings, Save, AlertCircle, ShoppingBag, Eye, HelpCircle } from "lucide-react";
 
 export default function AdminSettings() {
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings, activeRestaurantId } = useSettings();
   const { showToast } = useToast();
 
   // Local Form state
@@ -26,6 +26,27 @@ export default function AdminSettings() {
     footerText: settings.footerText || "",
     copyright: settings.copyright || ""
   });
+
+  // Keep form in sync when active restaurant or settings context changes
+  useEffect(() => {
+    setFormData({
+      restaurantName: settings.restaurantName || "",
+      restaurantLogo: settings.restaurantLogo || "",
+      restaurantBanner: settings.restaurantBanner || "",
+      primaryColor: settings.primaryColor || "#e63946",
+      secondaryColor: settings.secondaryColor || "#457b9d",
+      darkModeLogo: settings.darkModeLogo || "",
+      address: settings.address || "",
+      phone: settings.phone || "",
+      whatsapp: settings.whatsapp || "",
+      instagram: settings.instagram || "",
+      openingTime: settings.openingTime || "10:00",
+      closingTime: settings.closingTime || "22:00",
+      isOpen: settings.isOpen !== undefined ? settings.isOpen : true,
+      footerText: settings.footerText || "",
+      copyright: settings.copyright || ""
+    });
+  }, [settings, activeRestaurantId]);
 
   const [saving, setSaving] = useState(false);
 
@@ -92,7 +113,9 @@ export default function AdminSettings() {
       <main className="admin-content-area" id="admin-settings-content">
         <div className="dashboard-header" id="admin-settings-header">
           <div>
-            <h1 style={{ fontSize: "2rem" }}>Branding & Settings</h1>
+            <h1 style={{ fontSize: "2rem" }}>
+              {settings.restaurantName ? `${settings.restaurantName} - Settings` : "Branding & Settings"}
+            </h1>
             <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
               Configure your restaurant identity, custom color palette themes, hours of operation, and menu state.
             </p>
@@ -101,12 +124,12 @@ export default function AdminSettings() {
 
         <form onSubmit={handleSubmit} id="admin-settings-form">
           <div className="grid" style={{ gridTemplateColumns: "1.8fr 1fr", gap: "32px", alignItems: "start" }}>
-            
+
             {/* Left side: branding inputs form fields */}
             <div className="flex flex-col gap-3">
               {/* Card 1: Identity */}
               <div className="card">
-                <h2 style={{ fontSize: "1.2rem", marginBottom: "20px", display: "flex", alignCenter: "center", gap: "8px" }}>
+                <h2 style={{ fontSize: "1.2rem", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
                   <ShoppingBag size={18} /> Restaurant Identity
                 </h2>
 
@@ -164,7 +187,7 @@ export default function AdminSettings() {
 
               {/* Card 2: Customize Visual Colors */}
               <div className="card">
-                <h2 style={{ fontSize: "1.2rem", marginBottom: "20px", display: "flex", alignCenter: "center", gap: "8px" }}>
+                <h2 style={{ fontSize: "1.2rem", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
                   <Eye size={18} /> Visual Customization
                 </h2>
                 <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "16px" }}>
@@ -269,7 +292,7 @@ export default function AdminSettings() {
                       type="text"
                       name="phone"
                       className="input-field"
-                      placeholder="+1 555-555-5555"
+                      placeholder="+91 98765 43210"
                       value={formData.phone}
                       onChange={handleChange}
                     />
@@ -282,7 +305,7 @@ export default function AdminSettings() {
                       type="text"
                       name="whatsapp"
                       className="input-field"
-                      placeholder="+1 555-555-5555"
+                      placeholder="+91 98765 43210"
                       value={formData.whatsapp}
                       onChange={handleChange}
                     />
@@ -335,7 +358,7 @@ export default function AdminSettings() {
 
             {/* Right side: quick status widgets, preview details, and save button */}
             <div style={{ position: "sticky", top: "96px" }} className="flex flex-col gap-3">
-              
+
               {/* Quick status control Card */}
               <div className="card" style={{ borderLeft: "5px solid var(--primary-color)" }}>
                 <h3 style={{ fontSize: "1.1rem" }}>Restaurant Open Status</h3>
@@ -383,7 +406,7 @@ export default function AdminSettings() {
                   <button
                     className="btn"
                     type="button"
-                    style={{ backgroundColor: formData.primaryColor, color: "#ffffff", width: "100%", marginTop: "16px", padding: "10px", fontSize: "0.85rem", borderRadius: "20px" }}
+                    style={{ backgroundColor: formData.primaryColor, color: "#ffffff", width: "100%", marginTop: "16px", padding: "10px", fontSize: "0.85rem", borderRadius: "20px", fontWeight: "700" }}
                   >
                     Primary Button Preview
                   </button>
@@ -393,8 +416,8 @@ export default function AdminSettings() {
               {/* Submit Save Floating Bar */}
               <button
                 type="submit"
-                className="btn btn-secondary"
-                style={{ width: "100%", padding: "16px", fontSize: "1.1rem", gap: "10px" }}
+                className="btn btn-primary"
+                style={{ width: "100%", padding: "16px", fontSize: "1.1rem", gap: "10px", fontWeight: "700" }}
                 disabled={saving}
                 id="save-settings-submit-btn"
               >

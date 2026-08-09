@@ -1,46 +1,69 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useCart } from "../../context/CartContext.jsx";
-import { Check, ArrowLeft, Clock, ShoppingBag, PhoneCall } from "lucide-react";
+import { Check, ArrowLeft, Clock, PhoneCall } from "lucide-react";
 import { formatCurrency } from "../../utils/format.js";
 
 export default function OrderSuccess() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { settings } = useSettings();
+  const { settings, activeRestaurantId } = useSettings();
   const { clearTableNumber, clearCart } = useCart();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!orderId) return;
 
-    const orderRef = doc(db, "orders", orderId);
-    const unsubscribe = onSnapshot(
-      orderRef,
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const orderData = docSnap.data();
-          setOrder(orderData);
-          if (orderData.status === "completed" || orderData.status === "cancelled") {
-            clearTableNumber();
-          }
-        } else {
-          console.error("No such order found!");
+    let unsubscribe = () => {};
+
+    const setupListener = async () => {
+      let orderPath = activeRestaurantId && activeRestaurantId !== "default"
+        ? `restaurants/${activeRestaurantId}/orders/${orderId}`
+        : `orders/${orderId}`;
+
+      // Verify if document exists at primary path, else check root orders fallback
+      try {
+        let orderRef = doc(db, orderPath);
+        let snap = await getDoc(orderRef);
+
+        if (!snap.exists() && activeRestaurantId && activeRestaurantId !== "default") {
+          orderPath = `orders/${orderId}`;
+          orderRef = doc(db, orderPath);
         }
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error listening to order:", error);
+
+        unsubscribe = onSnapshot(
+          orderRef,
+          (docSnap) => {
+            if (docSnap.exists()) {
+              const orderData = docSnap.data();
+              setOrder({ id: docSnap.id, ...orderData });
+              if (orderData.status === "completed" || orderData.status === "cancelled") {
+                clearTableNumber();
+              }
+            } else {
+              console.error("No such order found!");
+            }
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Error listening to order:", error);
+            setLoading(false);
+          }
+        );
+      } catch (err) {
+        console.error("Order lookup error:", err);
         setLoading(false);
       }
-    );
+    };
+
+    setupListener();
 
     return () => unsubscribe();
-  }, [orderId]);
+  }, [orderId, activeRestaurantId]);
 
   if (loading) {
     return (
@@ -66,8 +89,6 @@ export default function OrderSuccess() {
     );
   }
 
-  // Determine active step index for timeline
-  // Statuses: pending, preparing, ready, completed, cancelled
   const statuses = ["pending", "preparing", "ready", "completed"];
   const currentStatusIndex = statuses.indexOf(order.status);
 
@@ -118,7 +139,7 @@ export default function OrderSuccess() {
               navigate("/");
             }
           }}
-          style={{ gap: "8px", backgroundColor: "var(--primary-color)", border: "none", color: "#ffffff" }}
+          style={{ gap: "8px", backgroundColor: "var(--primary-color)", border: "none", color: "#ffffff", fontWeight: "700" }}
           id="success-finish-dining-btn"
         >
           Finish Dining
@@ -227,7 +248,7 @@ export default function OrderSuccess() {
       {/* Order Item Details and Receipt summary */}
       <div className="card" id="success-order-items-summary-panel">
         <h2 style={{ fontSize: "1.2rem", marginBottom: "20px" }}>Ordered Items Summary</h2>
-        
+
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {order.items?.map((item, index) => (
             <div
@@ -301,7 +322,7 @@ export default function OrderSuccess() {
             <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Call our server or call us at {settings.phone}</div>
           </div>
         </div>
-        <a href={`tel:${settings.phone}`} className="btn btn-secondary" style={{ padding: "8px 16px", fontSize: "0.85rem", borderRadius: "20px" }}>
+        <a href={`tel:${settings.phone}`} className="btn btn-primary" style={{ padding: "8px 16px", fontSize: "0.85rem", borderRadius: "20px", fontWeight: "700" }}>
           Call Restaurant
         </a>
       </div>

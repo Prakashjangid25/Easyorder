@@ -3,6 +3,7 @@ import AdminSidebar from "./AdminSidebar.jsx";
 import { collection, onSnapshot, query, orderBy, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useSettings } from "../../context/SettingsContext.jsx";
 import { Clock, Printer, CheckCircle, Ban, CookingPot, ChefHat, Search, Volume2, Calendar, FileText } from "lucide-react";
 import { handleFirestoreError, OperationType } from "../../firebase/errorHandler.js";
 import { formatCurrency } from "../../utils/format.js";
@@ -17,12 +18,22 @@ export default function AdminOrders() {
   const [highlightedOrderIds, setHighlightedOrderIds] = useState(new Set());
 
   const { showToast } = useToast();
+  const { settings, activeRestaurantId } = useSettings();
+
   const knownOrderIds = useRef(new Set());
   const initialLoadDone = useRef(false);
 
   useEffect(() => {
+    setLoading(true);
+    initialLoadDone.current = false;
+    knownOrderIds.current = new Set();
+
+    const ordersColPath = activeRestaurantId && activeRestaurantId !== "default"
+      ? `restaurants/${activeRestaurantId}/orders`
+      : "orders";
+
     // Real-time Firestore orders listener
-    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, ordersColPath), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -48,26 +59,22 @@ export default function AdminOrders() {
         // Trigger alerts for newly received orders
         if (newOrdersToAlert.length > 0) {
           newOrdersToAlert.forEach((order, index) => {
-            // Play sound with a small staggered delay if multiple new orders arrive together
             setTimeout(() => {
               playNewOrderChime();
             }, index * 350);
 
-            // Display modern success green style popup in top-right
             showToast(
               "🟢 New Order Received",
               "new-order",
               `Table: ${order.tableNumber || "N/A"}\n\nPlease review the new order.`
             );
 
-            // Add to highlighted state to show "NEW" badge and glow
             setHighlightedOrderIds((prev) => {
               const next = new Set(prev);
               next.add(order.id);
               return next;
             });
 
-            // Auto-remove highlight after 6 seconds
             setTimeout(() => {
               setHighlightedOrderIds((prev) => {
                 const next = new Set(prev);
@@ -89,15 +96,18 @@ export default function AdminOrders() {
     );
 
     return () => unsubscribe();
-  }, [showToast]);
+  }, [activeRestaurantId, showToast]);
 
   const updateOrderStatus = async (orderId, nextStatus) => {
     try {
-      const orderRef = doc(db, "orders", orderId);
+      const docPath = activeRestaurantId && activeRestaurantId !== "default"
+        ? `restaurants/${activeRestaurantId}/orders/${orderId}`
+        : `orders/${orderId}`;
+
+      const orderRef = doc(db, docPath);
       await updateDoc(orderRef, { status: nextStatus });
       showToast(`Order status updated to: ${nextStatus.toUpperCase()}`, "success");
-      
-      // Sync local state details if modal is active
+
       if (selectedOrder && selectedOrder.id === orderId) {
         setSelectedOrder((prev) => ({ ...prev, status: nextStatus }));
       }
@@ -111,7 +121,7 @@ export default function AdminOrders() {
     const matchesTab = activeTab === "all" || o.status === activeTab;
     const matchesSearch =
       o.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.tableNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (o.tableNumber && o.tableNumber.toString().toLowerCase().includes(searchQuery.toLowerCase())) ||
       (o.customerNotes && o.customerNotes.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return matchesTab && matchesSearch;
@@ -128,7 +138,9 @@ export default function AdminOrders() {
       <main className="admin-content-area" id="admin-orders-content">
         <div className="dashboard-header" id="admin-orders-header">
           <div>
-            <h1 style={{ fontSize: "2rem" }}>Live Kitchen Console</h1>
+            <h1 style={{ fontSize: "2rem" }}>
+              {settings.restaurantName ? `${settings.restaurantName} - Live Orders` : "Live Kitchen Console"}
+            </h1>
             <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
               Approve pending orders, update cooking queues, and print chef receipts.
             </p>
@@ -361,7 +373,7 @@ export default function AdminOrders() {
         {/* HIDDEN PRINT-FRIENDLY RECEIPT FORMAT */}
         {selectedOrder && (
           <div className="print-receipt print-only" id="printable-kitchen-receipt">
-            <h2 style={{ textAlign: "center", textTransform: "uppercase" }}>EasyOrder Kitchen</h2>
+            <h2 style={{ textAlign: "center", textTransform: "uppercase" }}>{settings.restaurantName || "EasyOrder"}</h2>
             <div style={{ textAlign: "center", borderBottom: "1px dashed #000", paddingBottom: "10px", marginBottom: "10px" }}>
               <h3>TABLE {selectedOrder.tableNumber}</h3>
               <p>ID: #{selectedOrder.id.slice(-8).toUpperCase()}</p>

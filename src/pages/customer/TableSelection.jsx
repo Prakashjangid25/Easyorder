@@ -13,13 +13,17 @@ export default function TableSelection({ onValidTable }) {
   const [verifying, setVerifying] = useState(false);
   const [activeTables, setActiveTables] = useState([]);
   const { showToast } = useToast();
-  const { settings } = useSettings();
+  const { settings, activeRestaurantId } = useSettings();
+
+  const tablesColPath = activeRestaurantId && activeRestaurantId !== "default"
+    ? `restaurants/${activeRestaurantId}/tables`
+    : "tables";
 
   // Load valid tables from Firestore on mount
   useEffect(() => {
     const fetchTables = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "tables"));
+        const querySnapshot = await getDocs(collection(db, tablesColPath));
         const list = [];
         querySnapshot.forEach((doc) => {
           list.push({ id: doc.id, ...doc.data() });
@@ -30,7 +34,7 @@ export default function TableSelection({ onValidTable }) {
       }
     };
     fetchTables();
-  }, []);
+  }, [activeRestaurantId, tablesColPath]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,14 +46,12 @@ export default function TableSelection({ onValidTable }) {
 
     setVerifying(true);
     try {
-      // Re-fetch list to verify freshest data
-      const querySnapshot = await getDocs(collection(db, "tables"));
+      const querySnapshot = await getDocs(collection(db, tablesColPath));
       const latestTables = [];
       querySnapshot.forEach((doc) => {
         latestTables.push({ id: doc.id, ...doc.data() });
       });
 
-      // Check if input matches any table name (case insensitive)
       const matchedTable = latestTables.find(
         (t) =>
           t.name.trim().toLowerCase() === cleanInput ||
@@ -58,7 +60,6 @@ export default function TableSelection({ onValidTable }) {
       );
 
       if (matchedTable) {
-        // Save the canonical name (e.g. "Table 5" or "5")
         setTableNumber(matchedTable.name);
         showToast(`Welcome! You are seated at ${matchedTable.name}`, "success");
         onValidTable();
@@ -78,9 +79,9 @@ export default function TableSelection({ onValidTable }) {
         <div className="gate-icon-wrapper">
           <Utensils size={40} />
         </div>
-        
+
         <div>
-          <h1 className="gate-title">Welcome to {settings.restaurantName}</h1>
+          <h1 className="gate-title">Welcome to {settings.restaurantName || "Our Restaurant"}</h1>
           <p className="gate-desc">
             Please enter the table number shown on the QR code sticker to browse our menu and place order.
           </p>
@@ -94,7 +95,7 @@ export default function TableSelection({ onValidTable }) {
               type="text"
               className="input-field"
               placeholder="e.g. 5"
-              autocomplete="off"
+              autoComplete="off"
               value={tableInput}
               onChange={(e) => setTableInput(e.target.value)}
               disabled={verifying}
@@ -106,15 +107,13 @@ export default function TableSelection({ onValidTable }) {
           <button
             type="submit"
             className="btn btn-primary"
-            style={{ width: "100%", padding: "14px", fontSize: "1.1rem" }}
+            style={{ width: "100%", padding: "14px", fontSize: "1.1rem", fontWeight: "700" }}
             disabled={verifying}
             id="table-gatekeeper-submit-btn"
           >
             {verifying ? "Verifying Table..." : "Enter Restaurant Menu"}
           </button>
         </form>
-
-
 
         {/* Active Tables List / Badges */}
         {activeTables.length > 0 ? (

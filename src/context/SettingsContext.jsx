@@ -1,20 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase.js";
 import { handleFirestoreError, OperationType } from "../firebase/errorHandler.js";
 
 const SettingsContext = createContext();
 
-const defaultSettings = {
-  restaurantName: "EasyOrder",
+export const defaultSettings = {
+  restaurantName: "EasyOrder Bistro",
   restaurantLogo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop",
   restaurantBanner: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop",
   primaryColor: "#e63946",
   secondaryColor: "#457b9d",
   darkModeLogo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop",
   address: "123 Gourmet Street, Food City",
-  phone: "+1 555-123-4567",
-  whatsapp: "+1 555-123-4567",
+  phone: "+91 98765 43210",
+  whatsapp: "+91 98765 43210",
   instagram: "easyorder_bistro",
   openingTime: "09:00",
   closingTime: "22:00",
@@ -24,20 +24,26 @@ const defaultSettings = {
 };
 
 export function SettingsProvider({ children }) {
+  const [activeRestaurantId, setActiveRestaurantId] = useState("default");
   const [settings, setSettings] = useState(defaultSettings);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const settingsRef = doc(db, "settings", "restaurant");
-    
+    // Reference settings based on active restaurant or root fallback
+    const docPath = activeRestaurantId && activeRestaurantId !== "default"
+      ? `restaurants/${activeRestaurantId}/settings/restaurant`
+      : "settings/restaurant";
+
+    const settingsRef = doc(db, docPath);
+
     const unsubscribe = onSnapshot(
       settingsRef,
       async (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.data();
           setSettings({ ...defaultSettings, ...data });
-          
-          // Apply custom primary and secondary colors dynamically to CSS root variables!
+
+          // Apply dynamic CSS variable colors
           if (data.primaryColor) {
             document.documentElement.style.setProperty("--primary-color", data.primaryColor);
           }
@@ -46,37 +52,48 @@ export function SettingsProvider({ children }) {
           }
           setLoading(false);
         } else {
-          // If Firestore is blank, seed default settings document
+          // If settings document doesn't exist yet, attempt to set default
           try {
-            await setDoc(settingsRef, defaultSettings);
+            await setDoc(settingsRef, defaultSettings, { merge: true });
             setSettings(defaultSettings);
-            setLoading(false);
-          } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, "settings/restaurant");
+          } catch (e) {
+            console.warn("Could not seed settings doc:", e);
           }
+          setLoading(false);
         }
       },
       (error) => {
         console.error("Error fetching settings:", error);
-        // Fallback to defaults on permission issues
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [activeRestaurantId]);
 
-  const updateSettings = async (newSettings) => {
+  const updateSettings = async (newSettings, targetRestaurantId = activeRestaurantId) => {
     try {
-      const settingsRef = doc(db, "settings", "restaurant");
+      const docPath = targetRestaurantId && targetRestaurantId !== "default"
+        ? `restaurants/${targetRestaurantId}/settings/restaurant`
+        : "settings/restaurant";
+
+      const settingsRef = doc(db, docPath);
       await setDoc(settingsRef, newSettings, { merge: true });
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, "settings/restaurant");
+      handleFirestoreError(error, OperationType.WRITE, "settings");
     }
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, loading, updateSettings }}>
+    <SettingsContext.Provider 
+      value={{ 
+        settings, 
+        loading, 
+        activeRestaurantId, 
+        setActiveRestaurantId, 
+        updateSettings 
+      }}
+    >
       {children}
     </SettingsContext.Provider>
   );

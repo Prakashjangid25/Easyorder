@@ -6,48 +6,88 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Check if user is authenticated (Admins log in using Firebase Auth)
-    function isAdmin() {
+    function isSignedIn() {
       return request.auth != null;
     }
 
-    // Settings are readable by everyone, but only writable by authenticated admins
+    // Top-Level Restaurants Collection
+    match /restaurants/{restaurantId} {
+      // Restaurants are readable by anyone (so customer QR view can verify restaurant exists/is active)
+      allow read: if true;
+      // Writeable by authenticated admin/superadmin
+      allow write: if isSignedIn();
+
+      // Nested Restaurant Settings
+      match /settings/{settingId} {
+        allow read: if true;
+        allow write: if isSignedIn();
+      }
+
+      // Nested Categories
+      match /categories/{categoryId} {
+        allow read: if true;
+        allow write: if isSignedIn();
+      }
+
+      // Nested Products
+      match /products/{productId} {
+        allow read: if true;
+        allow write: if isSignedIn();
+      }
+
+      // Nested Tables
+      match /tables/{tableId} {
+        allow read: if true;
+        allow write: if isSignedIn();
+      }
+
+      // Nested Orders
+      match /orders/{orderId} {
+        allow create: if true;
+        allow get: if true;
+        allow list, update, delete: if isSignedIn();
+      }
+
+      // Nested OrderItems
+      match /orderItems/{orderItemId} {
+        allow create: if true;
+        allow get: if true;
+        allow list, update, delete: if isSignedIn();
+      }
+    }
+
+    // ROOT LEVEL FALLBACKS FOR SINGLE-TENANT BACKWARD COMPATIBILITY
+
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
-    // Categories are readable by everyone, but only writable by authenticated admins
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
-    // Products are readable by everyone, but only writable by authenticated admins
     match /products/{productId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
-    // Tables are readable by everyone (to check if valid), but only writable by authenticated admins
     match /tables/{tableId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
-    // Orders can be created and read by anyone (using their unique Order ID),
-    // but can only be updated, deleted, or listed by authenticated admins.
     match /orders/{orderId} {
       allow create: if true;
       allow get: if true;
-      allow list, update, delete: if isAdmin();
+      allow list, update, delete: if isSignedIn();
     }
 
-    // OrderItems are created when an order is placed, and readable by order ID
     match /orderItems/{orderItemId} {
       allow create: if true;
       allow get: if true;
-      allow list, update, delete: if isAdmin();
+      allow list, update, delete: if isSignedIn();
     }
   }
 }

@@ -6,6 +6,10 @@ import { handleFirestoreError, OperationType } from "../firebase/errorHandler.js
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
+  const [restaurantId, setRestaurantIdState] = useState(() => {
+    return sessionStorage.getItem("easyorder-restaurant-id") || "default";
+  });
+
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem("easyorder-cart");
     return savedCart ? JSON.parse(savedCart) : [];
@@ -24,6 +28,12 @@ export function CartProvider({ children }) {
   useEffect(() => {
     localStorage.setItem("easyorder-cart", JSON.stringify(cart));
   }, [cart]);
+
+  const setRestaurantId = (id) => {
+    const cleanId = id || "default";
+    setRestaurantIdState(cleanId);
+    sessionStorage.setItem("easyorder-restaurant-id", cleanId);
+  };
 
   const setTableNumber = (table) => {
     setTableNumberState(table);
@@ -52,7 +62,7 @@ export function CartProvider({ children }) {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === productId);
       if (!existingItem) return prevCart;
-      
+
       if (existingItem.quantity === 1) {
         return prevCart.filter((item) => item.id !== productId);
       }
@@ -79,19 +89,26 @@ export function CartProvider({ children }) {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
-  const placeOrder = async () => {
+  const placeOrder = async (overrideRestaurantId = restaurantId) => {
     if (cart.length === 0 || !tableNumber) return null;
+
+    const targetResId = overrideRestaurantId || restaurantId || "default";
 
     try {
       const batch = writeBatch(db);
-      
-      // 1. Create a reference for the new Order
-      const orderRef = doc(collection(db, "orders"));
+
+      // Determine order collection path
+      const ordersColPath = targetResId && targetResId !== "default"
+        ? `restaurants/${targetResId}/orders`
+        : "orders";
+
+      const orderRef = doc(collection(db, ordersColPath));
       const orderId = orderRef.id;
 
       const orderDate = new Date();
       const orderData = {
         id: orderId,
+        restaurantId: targetResId,
         tableNumber: tableNumber,
         status: "pending",
         customerNotes: specialInstructions,
@@ -109,14 +126,18 @@ export function CartProvider({ children }) {
         timestamp: serverTimestamp()
       };
 
-      // Set order document in batch
       batch.set(orderRef, orderData);
 
-      // 2. Add each ordered item to the 'orderItems' collection for full CRUD compliance
+      // Also set order items inside orderItems collection if needed
+      const orderItemsColPath = targetResId && targetResId !== "default"
+        ? `restaurants/${targetResId}/orderItems`
+        : "orderItems";
+
       cart.forEach((item) => {
-        const itemRef = doc(collection(db, "orderItems"));
+        const itemRef = doc(collection(db, orderItemsColPath));
         batch.set(itemRef, {
           id: itemRef.id,
+          restaurantId: targetResId,
           orderId: orderId,
           productId: item.id,
           name: item.name,
@@ -126,10 +147,8 @@ export function CartProvider({ children }) {
         });
       });
 
-      // Commit the batch write
       await batch.commit();
 
-      // Clear the cart
       clearCart();
       return orderId;
     } catch (error) {
@@ -141,6 +160,8 @@ export function CartProvider({ children }) {
   return (
     <CartContext.Provider
       value={{
+        restaurantId,
+        setRestaurantId,
         cart,
         tableNumber,
         isTableConfirmed,
