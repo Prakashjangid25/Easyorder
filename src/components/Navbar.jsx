@@ -8,11 +8,19 @@ import { auth } from "../firebase/firebase.js";
 import { signOut } from "firebase/auth";
 
 export default function Navbar() {
-  const { settings } = useSettings();
+  const { settings, activeRestaurantId } = useSettings();
   const { theme, toggleTheme } = useTheme();
   const { tableNumber, clearTableNumber } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleLogoClick = () => {
+    if (activeRestaurantId && activeRestaurantId !== "default") {
+      navigate(`/menu/${activeRestaurantId}`);
+    } else {
+      navigate("/customer");
+    }
+  };
 
   // Hide global navbar inside Super Admin and Admin pages (AdminLayout handles admin header/sidebar)
   if (
@@ -39,7 +47,7 @@ export default function Navbar() {
     <header className="app-header" id="easyorder-header">
       <div className="container header-container">
         {/* Restaurant Branding Logo */}
-        <div className="logo-container" onClick={() => navigate("/")} style={{ cursor: "pointer", minWidth: 0, flexShrink: 1 }}>
+        <div className="logo-container" onClick={handleLogoClick} style={{ cursor: "pointer", minWidth: 0, flexShrink: 1 }}>
           <img
             src={theme === "dark" ? settings.darkModeLogo || settings.restaurantLogo : settings.restaurantLogo}
             alt={settings.restaurantName}

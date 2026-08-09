@@ -319,9 +319,13 @@ function CustomerController() {
             {validationError}
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "24px" }}>
-            <a href="/admin/login" className="btn btn-primary" style={{ display: "inline-block", textDecoration: "none" }}>
-              Restaurant Admin Login &rarr;
-            </a>
+            <button
+              className="btn btn-primary"
+              onClick={() => window.location.reload()}
+              style={{ width: "100%" }}
+            >
+              Try Again
+            </button>
           </div>
         </div>
       </div>

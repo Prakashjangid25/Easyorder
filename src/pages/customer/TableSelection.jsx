@@ -159,17 +159,7 @@ export default function TableSelection({ onValidTable }) {
           )
         )}
 
-        {/* Direct Link to Admin Panel for convenience */}
-        <div style={{ borderTop: "1px solid var(--border-color)", width: "100%", marginTop: "24px", paddingTop: "16px", textAlign: "center" }}>
-          <a
-            href="/admin/login"
-            style={{ fontSize: "0.8rem", color: "var(--secondary-color)", fontWeight: "600", textDecoration: "none" }}
-          >
-            Go to Admin Dashboard &rarr;
-          </a>
-        </div>
-
-        <div className="flex align-center gap-1" style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: "12px" }}>
+        <div className="flex align-center gap-1" style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: "20px" }}>
           <HelpCircle size={14} />
           <span>Need help? Please call our dining room staff.</span>
         </div>

@@ -19,9 +19,17 @@ export default function CartPage() {
     placeOrder
   } = useCart();
 
-  const { settings } = useSettings();
+  const { settings, activeRestaurantId } = useSettings();
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  const handleReturnToMenu = () => {
+    if (activeRestaurantId && activeRestaurantId !== "default") {
+      navigate(`/menu/${activeRestaurantId}`);
+    } else {
+      navigate("/customer");
+    }
+  };
 
   const subtotal = getCartTotal();
   const gstRate = 0.05; // Standard 5% GST for restaurants
@@ -35,7 +43,7 @@ export default function CartPage() {
     }
     if (!tableNumber) {
       showToast("Table number is missing. Redirecting...", "error");
-      navigate("/");
+      handleReturnToMenu();
       return;
     }
 
@@ -54,7 +62,7 @@ export default function CartPage() {
       {/* Back button */}
       <button
         className="btn btn-outline"
-        onClick={() => navigate("/")}
+        onClick={handleReturnToMenu}
         style={{ marginBottom: "24px", gap: "8px" }}
         id="cart-back-btn"
       >
@@ -177,7 +185,7 @@ export default function CartPage() {
           </p>
           <button
             className="btn btn-primary"
-            onClick={() => navigate("/")}
+            onClick={handleReturnToMenu}
             style={{ marginTop: "16px" }}
             id="cart-empty-go-back-btn"
           >

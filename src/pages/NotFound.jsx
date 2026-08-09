@@ -21,7 +21,7 @@ export default function NotFound() {
 
         <button
           className="btn btn-primary"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/customer")}
           style={{ width: "100%", gap: "8px", padding: "14px", fontSize: "1rem" }}
           id="not-found-go-back-btn"
         >

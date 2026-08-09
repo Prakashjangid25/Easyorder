@@ -11,9 +11,18 @@ export default function OrderSuccess() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isDiningFinished, setIsDiningFinished] = useState(false);
   const { settings, activeRestaurantId } = useSettings();
   const { clearTableNumber, clearCart } = useCart();
   const navigate = useNavigate();
+
+  const handleReturnToMenu = () => {
+    if (activeRestaurantId && activeRestaurantId !== "default") {
+      navigate(`/menu/${activeRestaurantId}`);
+    } else {
+      navigate("/customer");
+    }
+  };
 
   useEffect(() => {
     if (!orderId) return;
@@ -82,9 +91,61 @@ export default function OrderSuccess() {
         <p style={{ color: "var(--text-secondary)", margin: "12px 0 24px" }}>
           We couldn't retrieve the details for Order ID: {orderId}.
         </p>
-        <button className="btn btn-primary" onClick={() => navigate("/")}>
+        <button className="btn btn-primary" onClick={handleReturnToMenu}>
           Return to Menu
         </button>
+      </div>
+    );
+  }
+
+  // Customer-facing "Thank You / Dining Completed" view
+  if (isDiningFinished) {
+    return (
+      <div className="container flex flex-col align-center justify-center" style={{ minHeight: "75vh", textAlign: "center", padding: "40px 16px" }} id="dining-completed-screen">
+        <div className="card gate-card" style={{ maxWidth: "480px", width: "100%", padding: "40px 24px", borderRadius: "16px", boxShadow: "var(--shadow-md)" }}>
+          <div style={{ width: "72px", height: "72px", borderRadius: "50%", backgroundColor: "rgba(16, 185, 129, 0.12)", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+            <Check size={40} strokeWidth={3} />
+          </div>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: "800", marginBottom: "12px", color: "var(--text-primary)" }}>
+            Thank You for Dining With Us!
+          </h1>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "24px" }}>
+            Your dining session at <strong>{settings.restaurantName || "our restaurant"}</strong> has been completed. We hope you enjoyed your meal and service!
+          </p>
+
+          <div style={{ backgroundColor: "var(--surface-hover)", borderRadius: "12px", padding: "16px", marginBottom: "24px", textAlign: "left" }}>
+            <div className="flex justify-between" style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "6px" }}>
+              <span>Order Reference:</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontWeight: "600", color: "var(--text-primary)" }}>#{order.id.slice(-8).toUpperCase()}</span>
+            </div>
+            {order.tableNumber && (
+              <div className="flex justify-between" style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "6px" }}>
+                <span>Table Number:</span>
+                <span style={{ fontWeight: "600", color: "var(--primary-color)" }}>Table {order.tableNumber}</span>
+              </div>
+            )}
+            <div className="flex justify-between" style={{ fontSize: "0.95rem", fontWeight: "700", marginTop: "10px", paddingTop: "10px", borderTop: "1px dashed var(--border-color)" }}>
+              <span>Total Paid:</span>
+              <span style={{ color: "var(--primary-color)" }}>{formatCurrency(order.totalAmount)}</span>
+            </div>
+          </div>
+
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "24px" }}>
+            Have a fantastic day ahead! We look forward to welcoming you back again soon.
+          </p>
+
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setIsDiningFinished(false);
+              handleReturnToMenu();
+            }}
+            style={{ width: "100%", padding: "12px", borderRadius: "24px", fontWeight: "700", fontSize: "1rem" }}
+            id="dining-completed-order-again-btn"
+          >
+            Start New Order
+          </button>
+        </div>
       </div>
     );
   }
@@ -122,7 +183,7 @@ export default function OrderSuccess() {
       <div className="flex justify-between align-center flex-wrap gap-2" style={{ marginBottom: "24px" }} id="success-buttons-group">
         <button
           className="btn btn-outline"
-          onClick={() => navigate("/")}
+          onClick={handleReturnToMenu}
           style={{ gap: "8px" }}
           id="success-back-btn"
         >
@@ -136,7 +197,7 @@ export default function OrderSuccess() {
             if (window.confirm("Are you sure you want to finish dining? This will clear your current table session.")) {
               clearTableNumber();
               clearCart();
-              navigate("/");
+              setIsDiningFinished(true);
             }
           }}
           style={{ gap: "8px", backgroundColor: "var(--primary-color)", border: "none", color: "#ffffff", fontWeight: "700" }}
