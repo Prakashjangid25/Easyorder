@@ -86,36 +86,6 @@ export default function AdminSidebar() {
             </span>
           </div>
         </div>
-
-        {/* Super Admin Switcher Dropdown */}
-        {isSuperAdmin && restaurantsList.length > 0 && (
-          <div style={{ width: "100%", marginTop: "8px" }}>
-            <label style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "700", display: "block", marginBottom: "4px" }}>
-              SWITCH TENANT
-            </label>
-            <select
-              value={activeRestaurantId}
-              onChange={handleSwitchRestaurant}
-              style={{
-                width: "100%",
-                padding: "6px 8px",
-                fontSize: "0.8rem",
-                borderRadius: "6px",
-                border: "1px solid var(--border-color)",
-                backgroundColor: "var(--surface-color)",
-                color: "var(--text-primary)",
-                fontWeight: "600",
-                cursor: "pointer"
-              }}
-            >
-              {restaurantsList.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} ({r.id})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
 
       <nav className="sidebar-nav" id="admin-sidebar-nav-links" style={{ flex: 1, padding: "16px 0" }}>
@@ -153,27 +123,6 @@ export default function AdminSidebar() {
 
       {/* Sidebar Footer Controls */}
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
-        {isSuperAdmin && (
-          <Link
-            to="/superadmin/dashboard"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 12px",
-              borderRadius: "8px",
-              backgroundColor: "rgba(230, 57, 70, 0.08)",
-              color: "var(--primary-color)",
-              fontSize: "0.82rem",
-              fontWeight: "700",
-              textDecoration: "none"
-            }}
-          >
-            <ShieldCheck size={16} />
-            <span>Super Admin Console</span>
-          </Link>
-        )}
-
         <button
           className="sidebar-link"
           onClick={toggleTheme}
