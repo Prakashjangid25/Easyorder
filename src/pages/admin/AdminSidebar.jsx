@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, ShoppingBag, Utensils, Table, Settings, LogOut, Moon, Sun, ShieldCheck, X } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Utensils, Table, Palette, Settings, LogOut, Moon, Sun, ShieldCheck, X } from "lucide-react";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useTheme } from "../../context/ThemeContext.jsx";
 import { auth, db } from "../../firebase/firebase.js";
@@ -50,10 +50,11 @@ export default function AdminSidebar({ isMobileOpen, onCloseMobile }) {
 
   const menuItems = [
     { label: "Dashboard", icon: <LayoutDashboard size={18} />, path: "/admin/dashboard" },
-    { label: "Active Orders", icon: <ShoppingBag size={18} />, path: "/admin/orders", badge: pendingCount },
-    { label: "Menu Manager", icon: <Utensils size={18} />, path: "/admin/menu" },
-    { label: "Table & QR Manager", icon: <Table size={18} />, path: "/admin/tables" },
-    { label: "Settings & Branding", icon: <Settings size={18} />, path: "/admin/settings" }
+    { label: "Orders", icon: <ShoppingBag size={18} />, path: "/admin/orders", badge: pendingCount },
+    { label: "Menu", icon: <Utensils size={18} />, path: "/admin/menu" },
+    { label: "Tables & QR", icon: <Table size={18} />, path: "/admin/tables" },
+    { label: "QR Designer", icon: <Palette size={18} />, path: "/admin/qr-designer" },
+    { label: "Settings", icon: <Settings size={18} />, path: "/admin/settings" }
   ];
 
   return (

@@ -21,6 +21,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import AdminOrders from "./pages/admin/AdminOrders.jsx";
 import AdminMenu from "./pages/admin/AdminMenu.jsx";
 import AdminTables from "./pages/admin/AdminTables.jsx";
+import QrDesigner from "./pages/admin/QrDesigner.jsx";
 import AdminSettings from "./pages/admin/AdminSettings.jsx";
 
 // Super Admin Views
@@ -495,6 +496,14 @@ export default function App() {
                       element={
                         <AdminProtectedRoute>
                           <AdminTables />
+                        </AdminProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/qr-designer"
+                      element={
+                        <AdminProtectedRoute>
+                          <QrDesigner />
                         </AdminProtectedRoute>
                       }
                     />
