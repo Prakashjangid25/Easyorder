@@ -39,14 +39,14 @@ export default function Navbar() {
     <header className="app-header" id="easyorder-header">
       <div className="container header-container">
         {/* Restaurant Branding Logo */}
-        <div className="logo-container" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
+        <div className="logo-container" onClick={() => navigate("/")} style={{ cursor: "pointer", minWidth: 0, flexShrink: 1 }}>
           <img
             src={theme === "dark" ? settings.darkModeLogo || settings.restaurantLogo : settings.restaurantLogo}
             alt={settings.restaurantName}
             onError={(e) => {
               e.target.style.display = "none";
             }}
-            style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }}
+            style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
           />
           <span className="logo-text">
             {settings.restaurantName === "EasyOrder" ? (
@@ -67,7 +67,7 @@ export default function Navbar() {
         </div>
 
         {/* Dynamic Header Controls */}
-        <div className="header-actions">
+        <div className="header-actions" style={{ flexShrink: 0 }}>
           {/* Table ID Badge for Customers */}
           {tableNumber && !location.pathname.startsWith("/admin") && (
             <div
@@ -76,10 +76,12 @@ export default function Navbar() {
                 backgroundColor: "rgba(230, 57, 70, 0.1)",
                 color: "var(--primary-color)",
                 border: "1px solid var(--primary-color)",
-                gap: "6px",
-                padding: "8px 12px",
+                gap: "4px",
+                padding: "6px 10px",
                 cursor: "pointer",
-                borderRadius: "20px"
+                borderRadius: "20px",
+                whiteSpace: "nowrap",
+                fontSize: "0.78rem"
               }}
               title="Click to change Table"
               onClick={() => {
@@ -89,7 +91,7 @@ export default function Navbar() {
                 }
               }}
             >
-              <Utensils size={14} />
+              <Utensils size={13} />
               <span>Table {tableNumber}</span>
             </div>
           )}

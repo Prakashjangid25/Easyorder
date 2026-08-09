@@ -159,25 +159,26 @@ export default function OrderSuccess() {
 
         {/* Real-time Order Stats */}
         <div
-          className="flex justify-between flex-wrap gap-3"
+          className="flex justify-between flex-wrap gap-2"
           style={{
             width: "100%",
             maxWidth: "600px",
             borderTop: "1px solid var(--border-color)",
-            paddingTop: "24px",
-            textAlign: "left"
+            paddingTop: "20px",
+            textAlign: "left",
+            boxSizing: "border-box"
           }}
         >
-          <div>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Order ID</span>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.95rem", fontWeight: "600" }}>#{order.id.slice(-8).toUpperCase()}</div>
+          <div style={{ minWidth: "90px", flex: 1 }}>
+            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Order ID</span>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.9rem", fontWeight: "600" }}>#{order.id.slice(-8).toUpperCase()}</div>
           </div>
-          <div>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Table</span>
-            <div style={{ fontSize: "1.1rem", fontWeight: "700", color: "var(--primary-color)" }}>Table {order.tableNumber}</div>
+          <div style={{ minWidth: "80px", flex: 1 }}>
+            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Table</span>
+            <div style={{ fontSize: "1rem", fontWeight: "700", color: "var(--primary-color)" }}>Table {order.tableNumber}</div>
           </div>
-          <div>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Live Status</span>
+          <div style={{ minWidth: "100px", flex: 1 }}>
+            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "600" }}>Live Status</span>
             <div>
               <span className={`status-badge status-${order.status}`}>
                 {getStatusLabel(order.status)}

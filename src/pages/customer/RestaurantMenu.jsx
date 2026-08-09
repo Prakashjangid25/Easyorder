@@ -81,9 +81,9 @@ export default function RestaurantMenu() {
   };
 
   return (
-    <div className="container" id="restaurant-menu-page-container" style={{ paddingBottom: "100px" }}>
+    <div className="container" id="restaurant-menu-page-container" style={{ paddingBottom: "100px", width: "100%", maxWidth: "1200px", boxSizing: "border-box" }}>
       {/* Back to landing page button */}
-      <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "16px", marginTop: "12px" }} id="back-to-landing-btn-container">
+      <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "12px", marginTop: "12px", width: "100%", maxWidth: "100%", minWidth: 0 }} id="back-to-landing-btn-container">
         <button
           className="btn btn-outline"
           onClick={() => {
@@ -92,10 +92,10 @@ export default function RestaurantMenu() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            fontSize: "0.85rem",
+            gap: "6px",
+            fontSize: "0.82rem",
             fontWeight: "600",
-            padding: "8px 16px",
+            padding: "6px 14px",
             borderRadius: "20px",
             border: "1px solid var(--border-color)",
             backgroundColor: "var(--surface-color)",
@@ -106,7 +106,7 @@ export default function RestaurantMenu() {
           }}
           id="back-to-landing-btn"
         >
-          <ArrowLeft size={15} style={{ color: "var(--primary-color)" }} />
+          <ArrowLeft size={14} style={{ color: "var(--primary-color)" }} />
           <span>Change Table</span>
         </button>
       </div>

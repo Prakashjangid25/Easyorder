@@ -1350,92 +1350,208 @@ img {
 }
 
 /* ==========================================================================
-   MOBILE-FIRST CUSTOMER QR ORDERING EXPERIENCE STYLES
+   MOBILE-FIRST CUSTOMER QR ORDERING EXPERIENCE STYLES (320px - 640px)
    ========================================================================== */
+
+/* Baseline Layout Overflow Protection */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+#root, .easyorder-app {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
 @media (max-width: 640px) {
   /* Customer Container Spacing */
   .container {
     padding: 0 12px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Header & Navigation Fixes */
+  .app-header {
+    padding: 10px 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .header-container {
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .logo-container {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .logo-text {
+    font-size: 1.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
 
   /* Compact Mobile Hero Banner */
   .hero-banner {
-    height: 130px;
-    padding: 16px;
+    height: auto;
+    min-height: 110px;
+    padding: 14px;
     margin-top: 10px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     border-radius: var(--border-radius-md);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .hero-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .hero-title {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 800;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .hero-subtitle {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     margin-top: 2px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
   }
 
   /* Sticky Category Scroll Chips */
   .category-tabs-container {
-    top: 56px;
+    top: 52px;
     padding: 6px 0;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden; /* Constrains horizontal scroller within viewport width */
   }
 
   .category-tabs {
     gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .category-tab {
-    padding: 8px 16px;
-    font-size: 0.82rem;
+    padding: 6px 14px;
+    font-size: 0.8rem;
     font-weight: 600;
+    flex-shrink: 0;
   }
 
   /* Search Bar */
   .search-bar-wrapper {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .search-input-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .search-input {
-    padding: 10px 14px 10px 40px;
-    font-size: 0.88rem;
+    padding: 10px 12px 10px 38px;
+    font-size: 0.85rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   /* 1-Column Mobile Product Grid */
   .product-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 90px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .product-card {
-    padding: 12px;
-    gap: 12px;
+    padding: 10px;
+    gap: 10px;
     border-radius: var(--border-radius-md);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   .product-image-wrapper {
-    width: 88px;
-    height: 88px;
+    width: 80px !important;
+    height: 80px !important;
     border-radius: var(--border-radius-sm);
+    flex-shrink: 0;
+  }
+
+  .product-card-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .product-card-title {
-    font-size: 0.98rem;
+    font-size: 0.95rem;
     font-weight: 700;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .product-card-desc {
-    font-size: 0.78rem;
-    margin-bottom: 6px;
-    line-height: 1.35;
+    font-size: 0.76rem;
+    margin-bottom: 4px;
+    line-height: 1.3;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .product-price-action {
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
   }
 
   .product-price {
-    font-size: 1.05rem;
+    font-size: 1rem;
+    white-space: nowrap;
   }
 
   /* Mobile Touch-Optimized Quantity Buttons */
@@ -1444,80 +1560,124 @@ img {
   }
 
   .qty-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 1.1rem;
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
   }
 
   .qty-val {
-    min-width: 24px;
-    font-size: 0.88rem;
+    min-width: 22px;
+    font-size: 0.85rem;
   }
 
   /* Fixed Floating Mobile Cart Bar */
   .floating-cart-trigger {
     left: 12px;
     right: 12px;
-    bottom: 16px;
+    bottom: 14px;
     width: calc(100% - 24px);
+    max-width: 480px;
     justify-content: space-between;
-    padding: 14px 20px;
-    font-size: 0.92rem;
+    padding: 12px 18px;
+    font-size: 0.88rem;
     border-radius: 30px;
     box-shadow: 0 10px 25px rgba(230, 57, 70, 0.45);
+    box-sizing: border-box;
+  }
+
+  /* Toast Notification Container on Mobile */
+  .toast-container {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
   }
 
   /* Table Gatekeeper Card Mobile Layout */
   .table-gate-screen {
     padding: 12px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .gate-card {
-    padding: 24px 16px;
+    padding: 20px 14px;
     border-radius: var(--border-radius-md);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .gate-icon-wrapper {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
   }
 
   .gate-title {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
   }
 
   .gate-desc {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
   }
 
   /* Cart & Order Review Mobile */
   .cart-page-wrapper {
-    padding-top: 16px;
+    padding-top: 12px;
     padding-bottom: 60px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .cart-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .cart-title {
-    font-size: 1.25rem;
-    margin-bottom: 16px;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
   }
 
   .cart-items-card, .cart-summary-card {
-    padding: 16px;
+    padding: 14px;
     border-radius: var(--border-radius-md);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .cart-item-row {
+    padding: 10px 0;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   /* Mobile Timeline for Order Tracking */
   .timeline {
     flex-direction: column;
     align-items: flex-start;
-    gap: 20px;
-    padding-left: 16px;
+    gap: 16px;
+    padding-left: 12px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .timeline::before {
-    top: 16px;
-    bottom: 16px;
-    left: 31px;
+    top: 12px;
+    bottom: 12px;
+    left: 27px;
     right: auto;
     width: 3px;
     height: auto;
@@ -1526,8 +1686,10 @@ img {
   .timeline-step {
     flex-direction: row;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     text-align: left;
+    width: 100%;
+    max-width: 100%;
   }
 
   .timeline-node {
@@ -1536,7 +1698,36 @@ img {
   }
 
   .timeline-label {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Specific Extra-Small Screen Adjustments (320px - 360px) */
+@media (max-width: 360px) {
+  .container {
+    padding: 0 8px;
+  }
+
+  .logo-text {
+    font-size: 1rem;
+  }
+
+  .product-image-wrapper {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .product-card {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .floating-cart-trigger {
+    left: 8px;
+    right: 8px;
+    width: calc(100% - 16px);
+    padding: 10px 14px;
+    font-size: 0.82rem;
   }
 }
 

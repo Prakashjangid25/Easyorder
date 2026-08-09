@@ -73,24 +73,24 @@ export default function CartPage() {
           <div className="card cart-items-card" id="cart-items-card-panel">
             <h2 style={{ fontSize: "1.2rem", marginBottom: "20px" }}>Ordered Dishes</h2>
             
-            <div className="cart-items-list">
+            <div className="cart-items-list" style={{ width: "100%", minWidth: 0 }}>
               {cart.map((item) => (
                 <div className="cart-item-row" key={item.id} id={`cart-item-row-${item.id}`}>
-                  <div className="cart-item-details">
-                    <div className="cart-item-name">
+                  <div className="cart-item-details" style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                    <div className="cart-item-name" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                       {item.isVeg ? (
-                        <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "var(--status-veg)" }}></span>
+                        <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "var(--status-veg)", flexShrink: 0 }}></span>
                       ) : (
-                        <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "var(--status-nonveg)" }}></span>
+                        <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "var(--status-nonveg)", flexShrink: 0 }}></span>
                       )}
-                      {item.name}
+                      <span>{item.name}</span>
                     </div>
                     <div className="cart-item-subprice">
                       {formatCurrency(item.price)} x {item.quantity}
                     </div>
                   </div>
 
-                  <div className="flex align-center gap-3">
+                  <div className="flex align-center gap-2" style={{ flexShrink: 0 }}>
                     {/* Quantity controls */}
                     <div className="quantity-selector">
                       <button className="qty-btn" onClick={() => removeFromCart(item.id)}>-</button>
@@ -102,11 +102,11 @@ export default function CartPage() {
                     <button
                       className="btn-icon"
                       onClick={() => deleteFromCart(item.id)}
-                      style={{ borderColor: "rgba(239,68,68,0.2)", color: "var(--status-cancelled)" }}
+                      style={{ borderColor: "rgba(239,68,68,0.2)", color: "var(--status-cancelled)", width: "32px", height: "32px" }}
                       title="Remove Item"
                       id={`delete-cart-item-${item.id}`}
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
