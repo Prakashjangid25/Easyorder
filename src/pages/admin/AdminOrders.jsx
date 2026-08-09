@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import AdminSidebar from "./AdminSidebar.jsx";
 import { collection, onSnapshot, query, orderBy, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -132,10 +131,7 @@ export default function AdminOrders() {
   };
 
   return (
-    <div className="admin-shell" id="admin-orders-page-container">
-      <AdminSidebar />
-
-      <main className="admin-content-area" id="admin-orders-content">
+    <main className="admin-content-area" id="admin-orders-content">
         <div className="dashboard-header" id="admin-orders-header">
           <div>
             <h1 style={{ fontSize: "2rem" }}>
@@ -403,6 +399,5 @@ export default function AdminOrders() {
           </div>
         )}
       </main>
-    </div>
   );
 }

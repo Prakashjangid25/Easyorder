@@ -5,15 +5,21 @@ import { db } from "../../firebase/firebase.js";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { playNewOrderChime, initAudioOnUserGesture } from "../../utils/audio.js";
 import AdminSidebar from "../../pages/admin/AdminSidebar.jsx";
-import { Bell, ShoppingBag, X, ArrowRight, Volume2 } from "lucide-react";
+import { Bell, ShoppingBag, X, ArrowRight, Menu } from "lucide-react";
 
 export default function AdminLayout({ children }) {
   const { activeRestaurantId, settings } = useSettings();
   const [newOrderNotification, setNewOrderNotification] = useState(null);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const knownOrdersRef = useRef(new Set());
   const isInitialSnapshotRef = useRef(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [location.pathname]);
 
   // Initialize Web Audio API on first user interaction anywhere in the layout
   useEffect(() => {
@@ -96,11 +102,37 @@ export default function AdminLayout({ children }) {
   };
 
   return (
-    <div className="admin-layout" style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--background-color)" }}>
-      <AdminSidebar />
+    <div className="admin-layout-wrapper" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "var(--background-color)" }}>
+      {/* MOBILE TOP NAVIGATION HEADER */}
+      <header className="admin-mobile-top-bar" id="admin-mobile-header">
+        <button
+          onClick={() => setIsMobileOpen((prev) => !prev)}
+          className="admin-mobile-menu-btn"
+          aria-label="Toggle navigation menu"
+          id="admin-mobile-menu-toggle"
+        >
+          <Menu size={22} />
+        </button>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflowY: "auto" }}>
-        {children}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, overflow: "hidden" }}>
+          <img
+            src={settings.restaurantLogo || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop"}
+            alt={settings.restaurantName}
+            style={{ width: "30px", height: "30px", borderRadius: "6px", objectFit: "cover" }}
+          />
+          <span style={{ fontWeight: "800", fontSize: "0.95rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {settings.restaurantName || "EasyOrder"}
+          </span>
+        </div>
+      </header>
+
+      <div className="admin-shell" style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        {/* SINGLE ADMIN SIDEBAR */}
+        <AdminSidebar isMobileOpen={isMobileOpen} onCloseMobile={() => setIsMobileOpen(false)} />
+
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflowY: "auto" }}>
+          {children}
+        </div>
       </div>
 
       {/* GLOBAL NEW ORDER ALERT POPUP */}

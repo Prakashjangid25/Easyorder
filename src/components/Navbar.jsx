@@ -14,8 +14,12 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide global navbar entirely inside Super Admin pages
-  if (location.pathname.startsWith("/superadmin") || location.pathname.startsWith("/super-admin")) {
+  // Hide global navbar inside Super Admin and Admin pages (AdminLayout handles admin header/sidebar)
+  if (
+    location.pathname.startsWith("/superadmin") ||
+    location.pathname.startsWith("/super-admin") ||
+    location.pathname.startsWith("/admin")
+  ) {
     return null;
   }
 

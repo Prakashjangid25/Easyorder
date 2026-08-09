@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import AdminSidebar from "./AdminSidebar.jsx";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { Settings, Save, AlertCircle, ShoppingBag, Eye, HelpCircle } from "lucide-react";
@@ -107,10 +106,7 @@ export default function AdminSettings() {
   };
 
   return (
-    <div className="admin-shell" id="admin-settings-page-container">
-      <AdminSidebar />
-
-      <main className="admin-content-area" id="admin-settings-content">
+    <main className="admin-content-area" id="admin-settings-content">
         <div className="dashboard-header" id="admin-settings-header">
           <div>
             <h1 style={{ fontSize: "2rem" }}>
@@ -433,6 +429,5 @@ export default function AdminSettings() {
           </div>
         </form>
       </main>
-    </div>
   );
 }

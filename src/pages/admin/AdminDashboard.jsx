@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import AdminSidebar from "./AdminSidebar.jsx";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { IndianRupee, Clock, CheckCircle, ShoppingCart, Ban, CookingPot, Flame, Award, Utensils } from "lucide-react";
@@ -132,10 +131,7 @@ export default function AdminDashboard() {
   const stats = getStats();
 
   return (
-    <div className="admin-shell" id="admin-dashboard-container">
-      <AdminSidebar />
-
-      <main className="admin-content-area" id="admin-dashboard-content">
+    <main className="admin-content-area" id="admin-dashboard-content">
         <div className="dashboard-header" id="admin-dashboard-header">
           <div>
             <h1 style={{ fontSize: "2rem" }}>
@@ -320,6 +316,5 @@ export default function AdminDashboard() {
           </div>
         </div>
       </main>
-    </div>
   );
 }
