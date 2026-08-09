@@ -7,7 +7,7 @@ const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [restaurantId, setRestaurantIdState] = useState(() => {
-    return sessionStorage.getItem("easyorder-restaurant-id") || "default";
+    return sessionStorage.getItem("easyorder-restaurant-id") || localStorage.getItem("activeAdminRestaurantId") || null;
   });
 
   const [cart, setCart] = useState(() => {
@@ -30,9 +30,12 @@ export function CartProvider({ children }) {
   }, [cart]);
 
   const setRestaurantId = (id) => {
-    const cleanId = id || "default";
-    setRestaurantIdState(cleanId);
-    sessionStorage.setItem("easyorder-restaurant-id", cleanId);
+    setRestaurantIdState(id || null);
+    if (id) {
+      sessionStorage.setItem("easyorder-restaurant-id", id);
+    } else {
+      sessionStorage.removeItem("easyorder-restaurant-id");
+    }
   };
 
   const setTableNumber = (table) => {
@@ -92,16 +95,16 @@ export function CartProvider({ children }) {
   const placeOrder = async (overrideRestaurantId = restaurantId) => {
     if (cart.length === 0 || !tableNumber) return null;
 
-    const targetResId = overrideRestaurantId || restaurantId || "default";
+    const targetResId = overrideRestaurantId || restaurantId;
+    if (!targetResId) {
+      console.error("Cannot place order: No restaurantId specified");
+      return null;
+    }
 
     try {
       const batch = writeBatch(db);
 
-      // Determine order collection path
-      const ordersColPath = targetResId && targetResId !== "default"
-        ? `restaurants/${targetResId}/orders`
-        : "orders";
-
+      const ordersColPath = `restaurants/${targetResId}/orders`;
       const orderRef = doc(collection(db, ordersColPath));
       const orderId = orderRef.id;
 
@@ -128,10 +131,7 @@ export function CartProvider({ children }) {
 
       batch.set(orderRef, orderData);
 
-      // Also set order items inside orderItems collection if needed
-      const orderItemsColPath = targetResId && targetResId !== "default"
-        ? `restaurants/${targetResId}/orderItems`
-        : "orderItems";
+      const orderItemsColPath = `restaurants/${targetResId}/orderItems`;
 
       cart.forEach((item) => {
         const itemRef = doc(collection(db, orderItemsColPath));
@@ -152,7 +152,7 @@ export function CartProvider({ children }) {
       clearCart();
       return orderId;
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, "orders");
+      handleFirestoreError(error, OperationType.WRITE, `restaurants/${targetResId}/orders`);
       return null;
     }
   };

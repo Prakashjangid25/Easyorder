@@ -24,17 +24,31 @@ export const defaultSettings = {
 };
 
 export function SettingsProvider({ children }) {
-  const [activeRestaurantId, setActiveRestaurantId] = useState("default");
+  const [activeRestaurantId, setActiveRestaurantIdState] = useState(() => {
+    return localStorage.getItem("activeAdminRestaurantId") || sessionStorage.getItem("easyorder-restaurant-id") || null;
+  });
   const [settings, setSettings] = useState(defaultSettings);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Reference settings based on active restaurant or root fallback
-    const docPath = activeRestaurantId && activeRestaurantId !== "default"
-      ? `restaurants/${activeRestaurantId}/settings/restaurant`
-      : "settings/restaurant";
+  const setActiveRestaurantId = (id) => {
+    setActiveRestaurantIdState(id);
+    if (id) {
+      localStorage.setItem("activeAdminRestaurantId", id);
+      sessionStorage.setItem("easyorder-restaurant-id", id);
+    } else {
+      localStorage.removeItem("activeAdminRestaurantId");
+      sessionStorage.removeItem("easyorder-restaurant-id");
+    }
+  };
 
-    const settingsRef = doc(db, docPath);
+  useEffect(() => {
+    if (!activeRestaurantId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const settingsRef = doc(db, "restaurants", activeRestaurantId, "settings", "restaurant");
 
     const unsubscribe = onSnapshot(
       settingsRef,
@@ -43,7 +57,6 @@ export function SettingsProvider({ children }) {
           const data = snapshot.data();
           setSettings({ ...defaultSettings, ...data });
 
-          // Apply dynamic CSS variable colors
           if (data.primaryColor) {
             document.documentElement.style.setProperty("--primary-color", data.primaryColor);
           }
@@ -52,18 +65,35 @@ export function SettingsProvider({ children }) {
           }
           setLoading(false);
         } else {
-          // If settings document doesn't exist yet, attempt to set default
-          try {
-            await setDoc(settingsRef, defaultSettings, { merge: true });
-            setSettings(defaultSettings);
-          } catch (e) {
-            console.warn("Could not seed settings doc:", e);
-          }
-          setLoading(false);
+          // Fallback to reading the restaurant doc directly if settings doc isn't created yet
+          const resRef = doc(db, "restaurants", activeRestaurantId);
+          onSnapshot(resRef, (resSnap) => {
+            if (resSnap.exists()) {
+              const resData = resSnap.data();
+              const merged = {
+                ...defaultSettings,
+                restaurantName: resData.name || defaultSettings.restaurantName,
+                restaurantLogo: resData.logo || defaultSettings.restaurantLogo,
+                restaurantBanner: resData.banner || defaultSettings.restaurantBanner,
+                primaryColor: resData.primaryColor || defaultSettings.primaryColor,
+                secondaryColor: resData.secondaryColor || defaultSettings.secondaryColor,
+                phone: resData.phone || defaultSettings.phone,
+                address: resData.address || defaultSettings.address
+              };
+              setSettings(merged);
+              if (resData.primaryColor) {
+                document.documentElement.style.setProperty("--primary-color", resData.primaryColor);
+              }
+              if (resData.secondaryColor) {
+                document.documentElement.style.setProperty("--secondary-color", resData.secondaryColor);
+              }
+            }
+            setLoading(false);
+          }, () => setLoading(false));
         }
       },
       (error) => {
-        console.error("Error fetching settings:", error);
+        console.error("Error fetching settings for restaurant", activeRestaurantId, error);
         setLoading(false);
       }
     );
@@ -72,12 +102,9 @@ export function SettingsProvider({ children }) {
   }, [activeRestaurantId]);
 
   const updateSettings = async (newSettings, targetRestaurantId = activeRestaurantId) => {
+    if (!targetRestaurantId) return;
     try {
-      const docPath = targetRestaurantId && targetRestaurantId !== "default"
-        ? `restaurants/${targetRestaurantId}/settings/restaurant`
-        : "settings/restaurant";
-
-      const settingsRef = doc(db, docPath);
+      const settingsRef = doc(db, "restaurants", targetRestaurantId, "settings", "restaurant");
       await setDoc(settingsRef, newSettings, { merge: true });
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, "settings");

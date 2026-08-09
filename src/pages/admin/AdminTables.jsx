@@ -87,10 +87,10 @@ export default function AdminTables() {
 
   // Construct the scanning URL for QR code
   const getTableScanUrl = (name) => {
-    if (activeRestaurantId && activeRestaurantId !== "default") {
-      return `${appBaseUrl}/${activeRestaurantId}/menu?table=${encodeURIComponent(name)}`;
+    if (activeRestaurantId) {
+      return `${appBaseUrl}/menu/${activeRestaurantId}/${encodeURIComponent(name)}`;
     }
-    return `${appBaseUrl}/customer?table=${encodeURIComponent(name)}`;
+    return `${appBaseUrl}/menu?table=${encodeURIComponent(name)}`;
   };
 
   const getQrCodeApiUrl = (name) => {

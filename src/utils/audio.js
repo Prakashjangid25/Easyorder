@@ -1,3 +1,23 @@
+let globalAudioCtx = null;
+
+/**
+ * Initializes and unlocks AudioContext on first user gesture.
+ */
+export function initAudioOnUserGesture() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!globalAudioCtx) {
+      globalAudioCtx = new AudioContextClass();
+    }
+    if (globalAudioCtx.state === "suspended") {
+      globalAudioCtx.resume();
+    }
+  } catch (e) {
+    console.warn("Could not resume AudioContext:", e);
+  }
+}
+
 /**
  * Plays a pleasant, premium synthesizer chime for new order notifications.
  * Uses the Web Audio API to synthesize a high-quality sound on the fly,
@@ -8,7 +28,11 @@ export function playNewOrderChime() {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
 
-    const audioCtx = new AudioContextClass();
+    const audioCtx = globalAudioCtx || new AudioContextClass();
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
 

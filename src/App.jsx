@@ -39,6 +39,9 @@ import { collection, getDocs } from "firebase/firestore";
 import { auth, db } from "./firebase/firebase.js";
 import { getRestaurantByUidOrEmail } from "./firebase/multiRestaurant.js";
 
+import AdminLayout from "./components/admin/AdminLayout.jsx";
+import { doc, getDoc } from "firebase/firestore";
+
 /* ==========================================================================
    ADMIN ROUTE PROTECTION COMPONENT
    ========================================================================== */
@@ -71,7 +74,7 @@ function AdminProtectedRoute({ children }) {
             localStorage.removeItem("adminLoginTimestamp");
             await signOut(auth).catch(() => {});
             setCurrentUser(null);
-            setAccessDenied("No restaurant account found associated with this user.");
+            setAccessDenied("Restaurant account could not be identified.");
             setAuthLoading(false);
             return;
           }
@@ -85,7 +88,7 @@ function AdminProtectedRoute({ children }) {
             return;
           }
 
-          // Lock restaurant context to assigned restaurant
+          // Lock restaurant context strictly to assigned restaurant
           setActiveRestaurantId(restaurant.id);
           localStorage.setItem("activeAdminRestaurantId", restaurant.id);
           setCurrentUser(user);
@@ -134,7 +137,7 @@ function AdminProtectedRoute({ children }) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  return children;
+  return <AdminLayout>{children}</AdminLayout>;
 }
 
 /* ==========================================================================
@@ -177,29 +180,31 @@ function SuperAdminProtectedRoute({ children }) {
 }
 
 /* ==========================================================================
-   CUSTOMER MAIN CONTROLLER (Handles table validation vs menu rendering)
+   CUSTOMER MAIN CONTROLLER (Multi-Tenant Table & Menu Validation)
    ========================================================================== */
 function CustomerController() {
-  const { tableNumber, setTableNumber, isTableConfirmed, setIsTableConfirmed, clearTableNumber } = useCart();
+  const { tableNumber, setTableNumber, isTableConfirmed, setIsTableConfirmed, clearTableNumber, setRestaurantId } = useCart();
+  const { setActiveRestaurantId } = useSettings();
   const location = useLocation();
-  const { tableId } = useParams();
+  const { restaurantId: paramResId, tableId: paramTableId } = useParams();
   const { showToast } = useToast();
   const welcomeToastShownRef = useRef(false);
 
-  const [isValidating, setIsValidating] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
   const [validationError, setValidationError] = useState(null);
   const [isTableValid, setIsTableValid] = useState(null);
 
   const searchParams = new URLSearchParams(location.search);
-  const tableParam = searchParams.get("table") || tableId;
+  const queryResId = searchParams.get("restaurantId") || searchParams.get("r");
+  const queryTableId = searchParams.get("table") || searchParams.get("t");
 
-  // Track the table number we are validating or using
-  const activeTableNum = tableParam || tableNumber;
+  const resolvedResId = paramResId || queryResId || sessionStorage.getItem("easyorder-restaurant-id");
+  const resolvedTableId = paramTableId || queryTableId || tableNumber;
 
   useEffect(() => {
-    const validateTable = async () => {
-      if (!activeTableNum) {
-        setIsTableValid(false);
+    const validateTenantAndTable = async () => {
+      if (!resolvedResId) {
+        setValidationError("Restaurant account could not be identified. Please scan the QR code at your table.");
         setIsValidating(false);
         return;
       }
@@ -208,61 +213,90 @@ function CustomerController() {
       setValidationError(null);
 
       try {
-        const querySnapshot = await getDocs(collection(db, "tables"));
+        // 1. Verify Restaurant Document
+        const resSnap = await getDoc(doc(db, "restaurants", resolvedResId));
+        if (!resSnap.exists()) {
+          setValidationError("Restaurant account could not be identified.");
+          setIsValidating(false);
+          return;
+        }
+
+        const resData = resSnap.data();
+        if (resData.status === "inactive") {
+          setValidationError("This restaurant is currently inactive.");
+          setIsValidating(false);
+          return;
+        }
+
+        // Lock Contexts to verified restaurant
+        setActiveRestaurantId(resolvedResId);
+        setRestaurantId(resolvedResId);
+
+        // 2. Verify Table Document if table ID is present
+        if (!resolvedTableId) {
+          setIsTableValid(false);
+          setIsValidating(false);
+          return;
+        }
+
+        const querySnapshot = await getDocs(collection(db, `restaurants/${resolvedResId}/tables`));
         const tableList = [];
-        querySnapshot.forEach((doc) => {
-          const name = doc.data().name;
-          if (name) {
-            tableList.push(name.toString().trim().toLowerCase());
-          }
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          tableList.push({
+            id: docSnap.id,
+            name: data.name ? data.name.toString().trim() : ""
+          });
         });
 
-        const target = activeTableNum.toString().trim().toLowerCase();
-        const exists = tableList.some(
-          (name) =>
-            name === target ||
-            name === `table ${target}` ||
-            target === `table ${name}`
+        const target = resolvedTableId.toString().trim().toLowerCase();
+        const foundTable = tableList.find(
+          (t) =>
+            t.id.toLowerCase() === target ||
+            t.name.toLowerCase() === target ||
+            t.name.toLowerCase() === `table ${target}` ||
+            target === `table ${t.name.toLowerCase()}`
         );
 
-        if (exists) {
+        if (foundTable) {
           setIsTableValid(true);
-          // If table came from params/url, auto-seat the customer
-          if (tableParam) {
-            setTableNumber(tableParam);
-            setIsTableConfirmed(true);
-            if (!welcomeToastShownRef.current) {
-              showToast("Welcome", "success");
-              welcomeToastShownRef.current = true;
-            }
-            // Clean query parameters/route elegantly without refreshing
-            if (searchParams.get("table")) {
-              window.history.replaceState({}, document.title, window.location.pathname);
-            }
+          setTableNumber(foundTable.name);
+          setIsTableConfirmed(true);
+
+          if (!welcomeToastShownRef.current) {
+            showToast(`Welcome to ${resData.name || "our restaurant"}!`, "success");
+            welcomeToastShownRef.current = true;
           }
         } else {
-          setIsTableValid(false);
-          setValidationError(`Table "${activeTableNum}" is invalid or not registered in our database.`);
+          // Fallback if no specific table document matches but table number was provided
+          if (resolvedTableId) {
+            setIsTableValid(true);
+            setTableNumber(resolvedTableId);
+            setIsTableConfirmed(true);
+          } else {
+            setIsTableValid(false);
+            setValidationError(`Table "${resolvedTableId}" is invalid or not registered for this restaurant.`);
+          }
         }
       } catch (error) {
-        console.error("Error validating table in CustomerController:", error);
+        console.error("Error validating tenant & table:", error);
         setValidationError("Could not connect to database. Please check your connection.");
       } finally {
         setIsValidating(false);
       }
     };
 
-    validateTable();
-  }, [tableParam, activeTableNum, setTableNumber, setIsTableConfirmed, showToast]);
+    validateTenantAndTable();
+  }, [resolvedResId, resolvedTableId, setActiveRestaurantId, setRestaurantId, setTableNumber, setIsTableConfirmed, showToast]);
 
   if (isValidating) {
     return (
       <div className="table-gate-screen" id="table-validation-loading-screen">
         <div className="card gate-card" style={{ maxWidth: "480px", padding: "48px", textAlign: "center" }}>
           <div className="skeleton" style={{ margin: "0 auto 16px", width: "50px", height: "50px", borderRadius: "50%", backgroundColor: "rgba(230, 57, 70, 0.1)" }}></div>
-          <h2>Verifying Table...</h2>
+          <h2>Loading Digital Menu...</h2>
           <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginTop: "8px" }}>
-            Connecting securely and checking table status. Please wait.
+            Verifying restaurant details and table session. Please wait.
           </p>
         </div>
       </div>
@@ -280,23 +314,13 @@ function CustomerController() {
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
-          <h2 style={{ color: "var(--primary-color)", fontSize: "1.5rem" }}>Invalid Table</h2>
+          <h2 style={{ color: "var(--primary-color)", fontSize: "1.4rem" }}>Unable to Load Menu</h2>
           <p style={{ color: "var(--text-secondary)", marginTop: "12px", fontSize: "0.95rem" }}>
             {validationError}
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "24px" }}>
-            <button className="btn btn-primary" onClick={() => {
-              clearTableNumber();
-              setValidationError(null);
-              // Clean search param
-              if (searchParams.get("table")) {
-                window.history.replaceState({}, document.title, window.location.pathname);
-              }
-            }} style={{ width: "100%" }} id="btn-select-valid-table">
-              Select or Enter a Valid Table
-            </button>
-            <a href="/admin/login" style={{ fontSize: "0.85rem", color: "var(--secondary-color)", fontWeight: "600", textDecoration: "none" }}>
-              Go to Admin Panel &rarr;
+            <a href="/admin/login" className="btn btn-primary" style={{ display: "inline-block", textDecoration: "none" }}>
+              Restaurant Admin Login &rarr;
             </a>
           </div>
         </div>
@@ -377,6 +401,30 @@ export default function App() {
                     <Route path="/" element={<AdminLogin />} />
 
                     {/* Customer Paths */}
+                    <Route
+                      path="/menu/:restaurantId/:tableId"
+                      element={
+                        <ErrorBoundary>
+                          <CustomerController />
+                        </ErrorBoundary>
+                      }
+                    />
+                    <Route
+                      path="/menu/:restaurantId"
+                      element={
+                        <ErrorBoundary>
+                          <CustomerController />
+                        </ErrorBoundary>
+                      }
+                    />
+                    <Route
+                      path="/customer/:restaurantId/:tableId"
+                      element={
+                        <ErrorBoundary>
+                          <CustomerController />
+                        </ErrorBoundary>
+                      }
+                    />
                     <Route
                       path="/customer"
                       element={

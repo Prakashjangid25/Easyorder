@@ -13,19 +13,17 @@ import {
 import { db, firebaseConfig } from "./firebase.js";
 import { handleFirestoreError, OperationType } from "./errorHandler.js";
 
-export const DEFAULT_RESTAURANT_ID = "default";
-
 export const DEFAULT_SETTINGS = {
-  restaurantName: "EasyOrder Bistro",
+  restaurantName: "My Restaurant",
   restaurantLogo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop",
   restaurantBanner: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop",
   primaryColor: "#e63946",
   secondaryColor: "#457b9d",
   darkModeLogo: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop",
-  address: "123 Gourmet Street, Food City",
+  address: "123 Gourmet Street",
   phone: "+91 98765 43210",
   whatsapp: "+91 98765 43210",
-  instagram: "easyorder_bistro",
+  instagram: "my_restaurant",
   openingTime: "09:00",
   closingTime: "22:00",
   isOpen: true,
@@ -77,33 +75,14 @@ export async function createRestaurantAuthUser(email, password) {
 /**
  * Get a specific restaurant by ID
  */
-export async function getRestaurant(restaurantId = DEFAULT_RESTAURANT_ID) {
+export async function getRestaurant(restaurantId) {
+  if (!restaurantId) return null;
   try {
     const resRef = doc(db, "restaurants", restaurantId);
     const snap = await getDoc(resRef);
 
     if (snap.exists()) {
       return { id: snap.id, ...snap.data() };
-    }
-
-    // Fallback if looking for default restaurant
-    if (restaurantId === DEFAULT_RESTAURANT_ID) {
-      const defaultData = {
-        id: DEFAULT_RESTAURANT_ID,
-        name: "EasyOrder Bistro",
-        slug: "default",
-        adminEmail: "admin@easyorder.com",
-        phone: "+91 98765 43210",
-        address: "123 Gourmet Street, Food City",
-        status: "active",
-        logo: DEFAULT_SETTINGS.restaurantLogo,
-        banner: DEFAULT_SETTINGS.restaurantBanner,
-        primaryColor: DEFAULT_SETTINGS.primaryColor,
-        secondaryColor: DEFAULT_SETTINGS.secondaryColor,
-        createdAt: new Date().toISOString()
-      };
-      await setDoc(resRef, defaultData);
-      return defaultData;
     }
 
     return null;
@@ -118,22 +97,38 @@ export async function getRestaurant(restaurantId = DEFAULT_RESTAURANT_ID) {
  */
 export async function getRestaurantByUidOrEmail(uid, email) {
   try {
+    // 1. Direct check in users collection doc
+    if (uid) {
+      const userDoc = await getDoc(doc(db, "users", uid));
+      if (userDoc.exists()) {
+        const uData = userDoc.data();
+        if (uData.restaurantId) {
+          const res = await getRestaurant(uData.restaurantId);
+          if (res) {
+            if (!res.adminUid) {
+              await updateDoc(doc(db, "restaurants", res.id), { adminUid: uid }).catch(() => {});
+              res.adminUid = uid;
+            }
+            return res;
+          }
+        }
+      }
+    }
+
+    // 2. Scan all restaurants for adminUid or adminEmail
     const list = await getAllRestaurants();
-    
-    // 1. Match by adminUid
+
     if (uid) {
       const foundByUid = list.find((r) => r.adminUid === uid);
       if (foundByUid) return foundByUid;
     }
 
-    // 2. Match by adminEmail
     if (email) {
       const lowerEmail = email.toLowerCase().trim();
       const foundByEmail = list.find(
         (r) => r.adminEmail && r.adminEmail.toLowerCase().trim() === lowerEmail
       );
       if (foundByEmail) {
-        // Auto-link adminUid if missing
         if (uid && !foundByEmail.adminUid) {
           try {
             await updateDoc(doc(db, "restaurants", foundByEmail.id), { adminUid: uid });
@@ -144,15 +139,6 @@ export async function getRestaurantByUidOrEmail(uid, email) {
         }
         return foundByEmail;
       }
-    }
-
-    // 3. Fallback for default restaurant
-    if (email && email.toLowerCase().trim() === "admin@easyorder.com") {
-      const def = await getRestaurant(DEFAULT_RESTAURANT_ID);
-      if (def && uid && !def.adminUid) {
-        await updateDoc(doc(db, "restaurants", DEFAULT_RESTAURANT_ID), { adminUid: uid }).catch(() => {});
-      }
-      return def;
     }
 
     return null;
@@ -172,13 +158,6 @@ export async function getAllRestaurants() {
     snap.forEach((d) => {
       list.push({ id: d.id, ...d.data() });
     });
-
-    // Ensure default restaurant exists
-    if (!list.some(r => r.id === DEFAULT_RESTAURANT_ID)) {
-      const def = await getRestaurant(DEFAULT_RESTAURANT_ID);
-      if (def) list.unshift(def);
-    }
-
     return list;
   } catch (error) {
     console.error("Error fetching all restaurants:", error);
@@ -390,8 +369,8 @@ export async function deleteRestaurant(restaurantId) {
  * Helper to get proper Firestore collection path for a restaurant
  */
 export function getRestaurantCollectionPath(restaurantId, subCollectionName) {
-  if (!restaurantId || restaurantId === DEFAULT_RESTAURANT_ID) {
-    return subCollectionName;
+  if (!restaurantId) {
+    throw new Error(`restaurantId is required to access ${subCollectionName}`);
   }
   return `restaurants/${restaurantId}/${subCollectionName}`;
 }
