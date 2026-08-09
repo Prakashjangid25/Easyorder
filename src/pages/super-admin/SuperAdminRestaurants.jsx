@@ -83,7 +83,7 @@ export default function SuperAdminRestaurants() {
       loadRestaurants();
     } catch (error) {
       console.error(error);
-      showToast("Failed to create restaurant", "error");
+      showToast(error.message || "Failed to create restaurant", "error");
     }
   };
 
@@ -345,6 +345,12 @@ export default function SuperAdminRestaurants() {
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <Mail size={14} style={{ color: "var(--text-muted)" }} />
                         <span>{r.adminEmail || "admin@easyorder.com"}</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <ShieldCheck size={14} style={{ color: "var(--secondary-color)" }} />
+                        <span style={{ fontFamily: "monospace", fontSize: "0.78rem" }} title={r.adminUid || "No UID"}>
+                          UID: {r.adminUid ? `${r.adminUid.slice(0, 14)}...` : "Not Linked"}
+                        </span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <Phone size={14} style={{ color: "var(--text-muted)" }} />

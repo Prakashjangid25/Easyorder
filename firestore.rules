@@ -10,6 +10,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Users Collection
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
     // Top-Level Restaurants Collection
     match /restaurants/{restaurantId} {
       // Restaurants are readable by anyone (so customer QR view can verify restaurant exists/is active)

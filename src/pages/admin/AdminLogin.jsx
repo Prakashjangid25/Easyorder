@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase/firebase.js";
+import { getRestaurantByUidOrEmail } from "../../firebase/multiRestaurant.js";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../context/ToastContext.jsx";
 import { useSettings } from "../../context/SettingsContext.jsx";
@@ -24,17 +25,28 @@ export default function AdminLogin() {
   const [loginError, setLoginError] = useState("");
 
   const { showToast } = useToast();
-  const { settings } = useSettings();
+  const { settings, setActiveRestaurantId } = useSettings();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const loginTime = parseInt(localStorage.getItem("adminLoginTimestamp") || "0", 10);
         const elapsed = Date.now() - loginTime;
         const SESSION_MAX_AGE = 12 * 60 * 60 * 1000;
         if (loginTime > 0 && elapsed < SESSION_MAX_AGE) {
-          navigate("/admin/dashboard", { replace: true });
+          const restaurant = await getRestaurantByUidOrEmail(user.uid, user.email);
+          if (restaurant && restaurant.status === "inactive") {
+            localStorage.removeItem("adminLoginTimestamp");
+            await signOut(auth);
+            setLoginError("This restaurant account is currently inactive. Please contact the platform administrator.");
+            return;
+          }
+          if (restaurant) {
+            setActiveRestaurantId(restaurant.id);
+            localStorage.setItem("activeAdminRestaurantId", restaurant.id);
+            navigate("/admin/dashboard", { replace: true });
+          }
         } else {
           localStorage.removeItem("adminLoginTimestamp");
           signOut(auth).catch(console.error);
@@ -42,20 +54,48 @@ export default function AdminLogin() {
       }
     });
     return () => unsubscribe();
-  }, [navigate]);
+  }, [navigate, setActiveRestaurantId]);
 
-  const saveAdminRoleAndLogin = async (user) => {
+  const processPostAuth = async (user) => {
+    const restaurant = await getRestaurantByUidOrEmail(user.uid, user.email);
+
+    if (!restaurant) {
+      await signOut(auth);
+      localStorage.removeItem("adminLoginTimestamp");
+      const errText = "No restaurant account found associated with this user. Please contact administrator.";
+      setLoginError(errText);
+      showToast(errText, "error");
+      return false;
+    }
+
+    if (restaurant.status === "inactive") {
+      await signOut(auth);
+      localStorage.removeItem("adminLoginTimestamp");
+      const errText = "This restaurant account is currently inactive. Please contact the platform administrator.";
+      setLoginError(errText);
+      showToast(errText, "error");
+      return false;
+    }
+
+    setActiveRestaurantId(restaurant.id);
+    localStorage.setItem("activeAdminRestaurantId", restaurant.id);
     localStorage.setItem("adminLoginTimestamp", Date.now().toString());
+
     try {
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
         role: "admin",
+        restaurantId: restaurant.id,
         updatedAt: new Date().toISOString()
       }, { merge: true });
     } catch (err) {
-      console.warn("Could not save admin role to Firestore:", err);
+      console.warn("Could not save user doc:", err);
     }
+
+    showToast(`Access Granted! Welcome to ${restaurant.name}`, "success");
+    navigate("/admin/dashboard", { replace: true });
+    return true;
   };
 
   const handleEmailLogin = async (e) => {
@@ -70,9 +110,7 @@ export default function AdminLogin() {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
-      await saveAdminRoleAndLogin(userCredential.user);
-      showToast("Access Granted. Welcome back!", "success");
-      navigate("/admin/dashboard");
+      await processPostAuth(userCredential.user);
     } catch (error) {
       localStorage.removeItem("adminLoginTimestamp");
       console.error("Login error:", error);
@@ -103,9 +141,7 @@ export default function AdminLogin() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      await saveAdminRoleAndLogin(result.user);
-      showToast("Access Granted via Google Login!", "success");
-      navigate("/admin/dashboard");
+      await processPostAuth(result.user);
     } catch (error) {
       localStorage.removeItem("adminLoginTimestamp");
       console.error("Google Auth error:", error);

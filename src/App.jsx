@@ -37,6 +37,7 @@ import NotFound from "./pages/NotFound.jsx";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
 import { auth, db } from "./firebase/firebase.js";
+import { getRestaurantByUidOrEmail } from "./firebase/multiRestaurant.js";
 
 /* ==========================================================================
    ADMIN ROUTE PROTECTION COMPONENT
@@ -44,32 +45,56 @@ import { auth, db } from "./firebase/firebase.js";
 function AdminProtectedRoute({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(null);
   const { showToast } = useToast();
+  const { setActiveRestaurantId } = useSettings();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const loginTime = parseInt(localStorage.getItem("adminLoginTimestamp") || "0", 10);
         const elapsed = Date.now() - loginTime;
         const SESSION_MAX_AGE = 12 * 60 * 60 * 1000;
 
+        // Check if super admin session is active
+        const superAdminSession = localStorage.getItem("superAdminSession");
+        if (superAdminSession) {
+          setCurrentUser(user);
+          setAuthLoading(false);
+          return;
+        }
+
         if (loginTime > 0 && elapsed < SESSION_MAX_AGE) {
+          const restaurant = await getRestaurantByUidOrEmail(user.uid, user.email);
+
+          if (!restaurant) {
+            localStorage.removeItem("adminLoginTimestamp");
+            await signOut(auth).catch(() => {});
+            setCurrentUser(null);
+            setAccessDenied("No restaurant account found associated with this user.");
+            setAuthLoading(false);
+            return;
+          }
+
+          if (restaurant.status === "inactive") {
+            localStorage.removeItem("adminLoginTimestamp");
+            await signOut(auth).catch(() => {});
+            setCurrentUser(null);
+            setAccessDenied("This restaurant account is currently inactive. Please contact the platform administrator.");
+            setAuthLoading(false);
+            return;
+          }
+
+          // Lock restaurant context to assigned restaurant
+          setActiveRestaurantId(restaurant.id);
+          localStorage.setItem("activeAdminRestaurantId", restaurant.id);
           setCurrentUser(user);
           setAuthLoading(false);
         } else {
-          const wasActive = loginTime > 0;
           localStorage.removeItem("adminLoginTimestamp");
-          signOut(auth).then(() => {
-            setCurrentUser(null);
-            setAuthLoading(false);
-            if (wasActive) {
-              showToast("Your session has expired. Please sign in again.", "error");
-            }
-          }).catch((err) => {
-            console.error(err);
-            setCurrentUser(null);
-            setAuthLoading(false);
-          });
+          signOut(auth).catch(console.error);
+          setCurrentUser(null);
+          setAuthLoading(false);
         }
       } else {
         setCurrentUser(null);
@@ -77,40 +102,29 @@ function AdminProtectedRoute({ children }) {
       }
     });
     return () => unsubscribe();
-  }, [showToast]);
-
-  useEffect(() => {
-    const checkSession = async () => {
-      if (auth.currentUser) {
-        const loginTime = parseInt(localStorage.getItem("adminLoginTimestamp") || "0", 10);
-        const elapsed = Date.now() - loginTime;
-        const SESSION_MAX_AGE = 12 * 60 * 60 * 1000;
-        if (loginTime === 0 || elapsed >= SESSION_MAX_AGE) {
-          const wasActive = loginTime > 0;
-          localStorage.removeItem("adminLoginTimestamp");
-          await signOut(auth);
-          if (wasActive) {
-            showToast("Your session has expired. Please sign in again.", "error");
-          }
-        }
-      }
-    };
-
-    // Run check immediately
-    checkSession();
-
-    // Check periodically every 15 seconds
-    const interval = setInterval(checkSession, 15000);
-    return () => clearInterval(interval);
-  }, [showToast]);
+  }, [showToast, setActiveRestaurantId]);
 
   if (authLoading) {
     return (
       <div className="table-gate-screen">
         <div className="card" style={{ padding: "40px", textAlign: "center" }}>
           <div className="skeleton" style={{ width: "60px", height: "60px", borderRadius: "50%", margin: "0 auto 16px" }}></div>
-          <h3>Verifying Security Credentials...</h3>
+          <h3>Verifying Restaurant Admin Credentials...</h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginTop: "4px" }}>Connecting securely to EasyOrder Cloud Database.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="table-gate-screen">
+        <div className="card" style={{ padding: "40px", maxWidth: "440px", textAlign: "center" }}>
+          <h3 style={{ color: "var(--status-cancelled)", marginBottom: "12px" }}>Access Restricted</h3>
+          <p style={{ color: "var(--text-primary)", fontSize: "0.9rem", marginBottom: "20px" }}>{accessDenied}</p>
+          <a href="/admin/login" className="btn btn-primary" style={{ display: "inline-block" }}>
+            Return to Login
+          </a>
         </div>
       </div>
     );
