@@ -254,9 +254,12 @@ function CustomerController() {
         const foundTable = tableList.find(
           (t) =>
             t.id.toLowerCase() === target ||
+            t.id.toLowerCase() === target.replace(/-/g, " ") ||
             t.name.toLowerCase() === target ||
+            t.name.toLowerCase() === target.replace(/-/g, " ") ||
             t.name.toLowerCase() === `table ${target}` ||
-            target === `table ${t.name.toLowerCase()}`
+            target === `table ${t.name.toLowerCase()}` ||
+            t.name.toLowerCase().replace(/\s+/g, "-") === target
         );
 
         if (foundTable) {

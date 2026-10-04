@@ -418,9 +418,11 @@ export function QrCardComponent({ table, design, settings, appBaseUrl, isPrint =
   const tableName = table?.name || "Table 1";
   
   // Dynamic scan URL using the exact customer routing logic
+  // Use table ID (not name) for reliable URL matching
+  const tableId = table?.id || tableName.replace(/\s+/g, "-").toLowerCase();
   const scanUrl = settings?.activeRestaurantId && settings?.activeRestaurantId !== "default"
-    ? `${appBaseUrl}/menu/${settings.activeRestaurantId}/${encodeURIComponent(tableName)}`
-    : `${appBaseUrl}/menu?table=${encodeURIComponent(tableName)}`;
+    ? `${appBaseUrl}/menu/${settings.activeRestaurantId}/${encodeURIComponent(tableId)}`
+    : `${appBaseUrl}/menu?table=${encodeURIComponent(tableId)}`;
 
   const effectiveLogoUrl = design.logoUrl || settings?.restaurantLogo || "";
   const effectiveRestaurantName = design.restaurantNameText || settings?.restaurantName || "EasyOrder Bistro";
