@@ -62,6 +62,8 @@ export default function AdminLogin() {
     if (!restaurant) {
       await signOut(auth);
       localStorage.removeItem("adminLoginTimestamp");
+      localStorage.removeItem("activeAdminRestaurantId");
+      sessionStorage.removeItem("easyorder-restaurant-id");
       const errText = "No restaurant account found associated with this user. Please contact administrator.";
       setLoginError(errText);
       showToast(errText, "error");
@@ -71,14 +73,21 @@ export default function AdminLogin() {
     if (restaurant.status === "inactive") {
       await signOut(auth);
       localStorage.removeItem("adminLoginTimestamp");
+      localStorage.removeItem("activeAdminRestaurantId");
+      sessionStorage.removeItem("easyorder-restaurant-id");
       const errText = "This restaurant account is currently inactive. Please contact the platform administrator.";
       setLoginError(errText);
       showToast(errText, "error");
       return false;
     }
 
+    // Clear any stale restaurant ID before setting the new one
+    localStorage.removeItem("activeAdminRestaurantId");
+    sessionStorage.removeItem("easyorder-restaurant-id");
+
     setActiveRestaurantId(restaurant.id);
     localStorage.setItem("activeAdminRestaurantId", restaurant.id);
+    sessionStorage.setItem("easyorder-restaurant-id", restaurant.id);
     localStorage.setItem("adminLoginTimestamp", Date.now().toString());
 
     try {

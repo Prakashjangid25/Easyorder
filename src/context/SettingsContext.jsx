@@ -41,6 +41,27 @@ export function SettingsProvider({ children }) {
     }
   };
 
+  // Clear stale restaurant ID on mount if it doesn't exist in Firestore
+  useEffect(() => {
+    const storedId = localStorage.getItem("activeAdminRestaurantId");
+    if (storedId) {
+      const restaurantRef = doc(db, "restaurants", storedId);
+      getDoc(restaurantRef).then((snap) => {
+        if (!snap.exists()) {
+          // Stored restaurant doesn't exist, clear it
+          localStorage.removeItem("activeAdminRestaurantId");
+          sessionStorage.removeItem("easyorder-restaurant-id");
+          setActiveRestaurantIdState(null);
+        }
+      }).catch(() => {
+        // If we can't verify, clear it to be safe
+        localStorage.removeItem("activeAdminRestaurantId");
+        sessionStorage.removeItem("easyorder-restaurant-id");
+        setActiveRestaurantIdState(null);
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (!activeRestaurantId) {
       setLoading(false);
