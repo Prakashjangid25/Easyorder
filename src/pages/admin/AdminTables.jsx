@@ -316,6 +316,7 @@ export default function AdminTables() {
                   table={selectedTableQR}
                   design={activeTableDesign}
                   settings={settings}
+                  activeRestaurantId={activeRestaurantId}
                   appBaseUrl={appBaseUrl}
                   customId={`table-card-export-${selectedTableQR.id}`}
                 />

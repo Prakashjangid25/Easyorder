@@ -418,6 +418,14 @@ export default function App() {
                       }
                     />
                     <Route
+                      path="/menu"
+                      element={
+                        <ErrorBoundary>
+                          <CustomerController />
+                        </ErrorBoundary>
+                      }
+                    />
+                    <Route
                       path="/menu/:restaurantId"
                       element={
                         <ErrorBoundary>

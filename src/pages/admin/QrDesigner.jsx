@@ -414,14 +414,14 @@ export const TEMPLATE_PRESETS = [
 ];
 
 // Single Reusable QR Card Component (Source of Truth)
-export function QrCardComponent({ table, design, settings, appBaseUrl, isPrint = false, customId }) {
+export function QrCardComponent({ table, design, settings, activeRestaurantId, appBaseUrl, isPrint = false, customId }) {
   const tableName = table?.name || "Table 1";
-  
+
   // Dynamic scan URL using the exact customer routing logic
   // Use table ID (not name) for reliable URL matching
   const tableId = table?.id || tableName.replace(/\s+/g, "-").toLowerCase();
-  const scanUrl = settings?.activeRestaurantId && settings?.activeRestaurantId !== "default"
-    ? `${appBaseUrl}/menu/${settings.activeRestaurantId}/${encodeURIComponent(tableId)}`
+  const scanUrl = activeRestaurantId && activeRestaurantId !== "default"
+    ? `${appBaseUrl}/menu/${activeRestaurantId}/${encodeURIComponent(tableId)}`
     : `${appBaseUrl}/menu?table=${encodeURIComponent(tableId)}`;
 
   const effectiveLogoUrl = design.logoUrl || settings?.restaurantLogo || "";
@@ -1473,6 +1473,7 @@ export default function QrDesigner() {
                 table={activeTableForPreview}
                 design={design}
                 settings={settings}
+                activeRestaurantId={activeRestaurantId}
                 appBaseUrl={appBaseUrl}
               />
             </div>
@@ -1579,6 +1580,7 @@ export default function QrDesigner() {
                 table={tbl}
                 design={design}
                 settings={settings}
+                activeRestaurantId={activeRestaurantId}
                 appBaseUrl={appBaseUrl}
                 isPrint={true}
                 customId={`print-qr-card-${tbl.id}`}
@@ -1591,6 +1593,7 @@ export default function QrDesigner() {
               table={{ id: "preview-1", name: "Table 1" }}
               design={design}
               settings={settings}
+              activeRestaurantId={activeRestaurantId}
               appBaseUrl={appBaseUrl}
               isPrint={true}
               customId="print-qr-card-preview-1"
