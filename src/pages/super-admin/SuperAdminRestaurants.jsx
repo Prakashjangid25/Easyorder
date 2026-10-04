@@ -282,15 +282,15 @@ export default function SuperAdminRestaurants() {
 
         {/* Search Bar */}
         <div className="sa-glass-card" style={{ padding: "16px", marginBottom: "24px" }}>
-          <div style={{ position: "relative" }}>
-            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+          <div style={{ position: "relative", width: "100%" }}>
+            <Search size={18} style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", zIndex: 2, pointerEvents: "none" }} />
             <input
               type="text"
               className="sa-input"
               placeholder="Search restaurants by name, ID, or admin email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: "44px" }}
+              style={{ paddingLeft: "44px", paddingRight: "44px", width: "100%", boxSizing: "border-box", position: "relative", zIndex: 1 }}
             />
           </div>
         </div>
