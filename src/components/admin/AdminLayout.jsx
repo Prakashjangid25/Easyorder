@@ -3,12 +3,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { useSettings } from "../../context/SettingsContext.jsx";
+import { useTheme } from "../../context/ThemeContext.jsx";
 import { playNewOrderChime, initAudioOnUserGesture } from "../../utils/audio.js";
 import AdminSidebar from "../../pages/admin/AdminSidebar.jsx";
-import { Bell, ShoppingBag, X, ArrowRight, Menu } from "lucide-react";
+import { Bell, ShoppingBag, X, ArrowRight, Menu, Sun, Moon } from "lucide-react";
 
 export default function AdminLayout({ children }) {
   const { activeRestaurantId, settings } = useSettings();
+  const { theme, toggleTheme } = useTheme();
   const [newOrderNotification, setNewOrderNotification] = useState(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const knownOrdersRef = useRef(new Set());
@@ -124,6 +126,31 @@ export default function AdminLayout({ children }) {
             {settings.restaurantName || "EasyOrder"}
           </span>
         </div>
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={toggleTheme}
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1px solid var(--border-color)",
+            background: theme === "dark"
+              ? "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)"
+              : "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+            color: theme === "dark" ? "#fbbf24" : "#6366f1",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            flexShrink: 0
+          }}
+          title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          aria-label="Toggle dark mode"
+        >
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
       </header>
 
       <div className="admin-shell" style={{ display: "flex", flex: 1, minHeight: 0 }}>
@@ -134,6 +161,43 @@ export default function AdminLayout({ children }) {
           {children}
         </div>
       </div>
+
+      {/* FLOATING DARK MODE TOGGLE - Visible on all screen sizes */}
+      <button
+        onClick={toggleTheme}
+        style={{
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          zIndex: 9998,
+          width: "52px",
+          height: "52px",
+          borderRadius: "16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "1px solid var(--border-color)",
+          background: theme === "dark"
+            ? "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)"
+            : "linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)",
+          color: theme === "dark" ? "#fbbf24" : "#6366f1",
+          cursor: "pointer",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          boxShadow: theme === "dark"
+            ? "0 8px 24px rgba(0,0,0,0.4)"
+            : "0 8px 24px rgba(0,0,0,0.1)"
+        }}
+        title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        aria-label="Toggle dark mode"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "scale(1.1) rotate(15deg)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "scale(1) rotate(0deg)";
+        }}
+      >
+        {theme === "dark" ? <Sun size={22} /> : <Moon size={22} />}
+      </button>
 
       {/* GLOBAL NEW ORDER ALERT POPUP */}
       {newOrderNotification && (
