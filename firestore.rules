@@ -10,6 +10,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin" ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin"
+      );
+    }
+
     // Users Collection
     match /users/{userId} {
       allow read, write: if true;
