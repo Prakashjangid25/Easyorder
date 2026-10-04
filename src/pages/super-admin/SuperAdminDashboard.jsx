@@ -4,7 +4,7 @@ import SuperAdminSidebar from "../../components/super-admin/SuperAdminSidebar.js
 import { getAllRestaurants } from "../../firebase/multiRestaurant.js";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
-import { Store, CheckCircle, XCircle, ArrowRight, Plus, ExternalLink, ShoppingBag, IndianRupee, Eye } from "lucide-react";
+import { Store, CheckCircle, XCircle, ArrowRight, Plus, ExternalLink, ShoppingBag, IndianRupee, Eye, TrendingUp, Activity } from "lucide-react";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
 import { formatCurrency } from "../../utils/format.js";
@@ -26,7 +26,6 @@ export default function SuperAdminDashboard() {
         const list = await getAllRestaurants();
         setRestaurants(list);
 
-        // Fetch platform orders summary across restaurants
         let sumTotalOrders = 0;
         let sumTodayOrders = 0;
         let sumRevenue = 0;
@@ -76,25 +75,40 @@ export default function SuperAdminDashboard() {
     navigate("/admin/dashboard");
   };
 
+  const stats = [
+    { label: "Total Restaurants", value: restaurants.length, sub: "Registered SaaS tenants", icon: <Store size={22} />, color: "var(--primary-color)", bg: "rgba(230, 57, 70, 0.1)", gradient: "sa-red" },
+    { label: "Active Restaurants", value: activeCount, sub: "Receiving live orders", icon: <CheckCircle size={22} />, color: "#2a9d8f", bg: "rgba(42, 157, 143, 0.1)", gradient: "sa-green" },
+    { label: "Inactive Restaurants", value: inactiveCount, sub: "Disabled / suspended", icon: <XCircle size={22} />, color: "#e63946", bg: "rgba(230, 57, 70, 0.1)", gradient: "sa-orange" },
+    { label: "Total Orders", value: totalOrders, sub: `Today: ${todaysOrders} orders`, icon: <ShoppingBag size={22} />, color: "var(--secondary-color)", bg: "rgba(69, 123, 157, 0.1)", gradient: "sa-blue" },
+    { label: "Total Revenue", value: formatCurrency(totalRevenue), sub: "Across all tenants", icon: <IndianRupee size={22} />, color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", gradient: "sa-purple" }
+  ];
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--background-color)" }}>
       <SuperAdminSidebar />
 
-      <main style={{ flex: 1, padding: "32px", overflowY: "auto" }}>
+      <main style={{ flex: 1, padding: "32px", overflowY: "auto" }} className="sa-scroll">
+        {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
           <div>
-            <h1 style={{ fontSize: "1.75rem", fontWeight: "800", color: "var(--text-primary)" }}>
-              Super Admin Overview
-            </h1>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginTop: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <h1 style={{ fontSize: "1.75rem", fontWeight: "800", color: "var(--text-primary)", margin: 0 }}>
+                Super Admin Overview
+              </h1>
+              <span className="sa-badge sa-badge-success" style={{ gap: "4px" }}>
+                <Activity size={12} />
+                Live
+              </span>
+            </div>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", marginTop: "6px" }}>
               High-level metrics and SaaS platform management console.
             </p>
           </div>
 
           <Link
             to="/superadmin/restaurants"
-            className="btn btn-primary"
-            style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "700" }}
+            className="sa-btn-premium"
+            style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}
           >
             <Plus size={18} />
             <span>Create Restaurant</span>
@@ -103,123 +117,122 @@ export default function SuperAdminDashboard() {
 
         {/* Metric Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", marginBottom: "32px" }}>
-          <div className="card" style={{ padding: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>Total Restaurants</span>
-              <div style={{ padding: "8px", borderRadius: "10px", backgroundColor: "rgba(230, 57, 70, 0.1)", color: "var(--primary-color)" }}>
-                <Store size={20} />
+          {stats.map((stat, idx) => (
+            <div key={idx} className={`sa-stat-card ${stat.gradient}`}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                <span style={{ fontSize: "0.78rem", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  {stat.label}
+                </span>
+                <div style={{
+                  padding: "10px",
+                  borderRadius: "12px",
+                  backgroundColor: stat.bg,
+                  color: stat.color,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}>
+                  {stat.icon}
+                </div>
+              </div>
+              <div style={{ fontSize: "2rem", fontWeight: "800", color: stat.color, lineHeight: 1.2 }}>
+                {stat.value}
+              </div>
+              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "6px" }}>
+                {stat.sub}
               </div>
             </div>
-            <div style={{ fontSize: "2rem", fontWeight: "800", color: "var(--text-primary)" }}>{restaurants.length}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>Registered SaaS tenants</div>
-          </div>
-
-          <div className="card" style={{ padding: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>Active Restaurants</span>
-              <div style={{ padding: "8px", borderRadius: "10px", backgroundColor: "rgba(42, 157, 143, 0.1)", color: "#2a9d8f" }}>
-                <CheckCircle size={20} />
-              </div>
-            </div>
-            <div style={{ fontSize: "2rem", fontWeight: "800", color: "#2a9d8f" }}>{activeCount}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>Receiving live orders</div>
-          </div>
-
-          <div className="card" style={{ padding: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>Inactive Restaurants</span>
-              <div style={{ padding: "8px", borderRadius: "10px", backgroundColor: "rgba(230, 57, 70, 0.1)", color: "#e63946" }}>
-                <XCircle size={20} />
-              </div>
-            </div>
-            <div style={{ fontSize: "2rem", fontWeight: "800", color: "#e63946" }}>{inactiveCount}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>Disabled/suspended</div>
-          </div>
-
-          <div className="card" style={{ padding: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>Total Orders</span>
-              <div style={{ padding: "8px", borderRadius: "10px", backgroundColor: "rgba(69, 123, 157, 0.1)", color: "var(--secondary-color)" }}>
-                <ShoppingBag size={20} />
-              </div>
-            </div>
-            <div style={{ fontSize: "2rem", fontWeight: "800", color: "var(--text-primary)" }}>{totalOrders}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>Today: {todaysOrders} orders</div>
-          </div>
-
-          <div className="card" style={{ padding: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: "700", color: "var(--text-muted)", textTransform: "uppercase" }}>Total Revenue</span>
-              <div style={{ padding: "8px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#10b981" }}>
-                <IndianRupee size={20} />
-              </div>
-            </div>
-            <div style={{ fontSize: "1.8rem", fontWeight: "800", color: "#10b981" }}>{formatCurrency(totalRevenue)}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>Across all tenants</div>
-          </div>
+          ))}
         </div>
 
         {/* Recent Restaurants List */}
-        <div className="card" style={{ padding: "24px" }}>
+        <div className="sa-glass-card" style={{ padding: "28px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-            <h2 style={{ fontSize: "1.2rem", fontWeight: "800", color: "var(--text-primary)" }}>Restaurants Summary</h2>
-            <Link to="/superadmin/restaurants" style={{ fontSize: "0.85rem", color: "var(--primary-color)", fontWeight: "700", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+            <h2 style={{ fontSize: "1.15rem", fontWeight: "800", color: "var(--text-primary)", margin: 0 }}>
+              Restaurants Summary
+            </h2>
+            <Link
+              to="/superadmin/restaurants"
+              style={{
+                fontSize: "0.85rem",
+                color: "var(--primary-color)",
+                fontWeight: "700",
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px"
+              }}
+            >
               <span>View All</span>
               <ArrowRight size={16} />
             </Link>
           </div>
 
           {loading ? (
-            <p style={{ color: "var(--text-muted)" }}>Loading platform summary...</p>
+            <div style={{ textAlign: "center", padding: "40px" }}>
+              <div style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                border: "3px solid var(--border-color)",
+                borderTopColor: "var(--primary-color)",
+                animation: "spin 1s linear infinite",
+                margin: "0 auto 16px"
+              }} />
+              <p style={{ color: "var(--text-muted)" }}>Loading platform summary...</p>
+            </div>
           ) : restaurants.length === 0 ? (
-            <p style={{ color: "var(--text-muted)" }}>No restaurants created yet.</p>
+            <div style={{ textAlign: "center", padding: "40px" }}>
+              <Store size={48} style={{ color: "var(--text-muted)", marginBottom: "12px" }} />
+              <p style={{ color: "var(--text-muted)", fontSize: "1rem" }}>No restaurants created yet.</p>
+            </div>
           ) : (
             <div style={{ overflowX: "auto" }}>
-              <table className="admin-table" style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
+              <table className="sa-table">
                 <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border-color)", color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase" }}>
-                    <th style={{ padding: "12px" }}>Restaurant</th>
-                    <th style={{ padding: "12px" }}>Slug / ID</th>
-                    <th style={{ padding: "12px" }}>Admin Email</th>
-                    <th style={{ padding: "12px" }}>Status</th>
-                    <th style={{ padding: "12px", textAlign: "right" }}>Action</th>
+                  <tr>
+                    <th>Restaurant</th>
+                    <th>Slug / ID</th>
+                    <th>Admin Email</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: "right" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {restaurants.map((res) => (
-                    <tr key={res.id} style={{ borderBottom: "1px solid var(--border-color)", fontSize: "0.9rem" }}>
-                      <td style={{ padding: "12px", fontWeight: "600" }}>{res.name}</td>
-                      <td style={{ padding: "12px", fontFamily: "monospace", color: "var(--text-muted)" }}>{res.id}</td>
-                      <td style={{ padding: "12px" }}>{res.adminEmail || "N/A"}</td>
-                      <td style={{ padding: "12px" }}>
-                        <span style={{
-                          padding: "4px 10px",
-                          borderRadius: "12px",
-                          fontSize: "0.75rem",
-                          fontWeight: "700",
-                          backgroundColor: res.status === "active" ? "rgba(42, 157, 143, 0.15)" : "rgba(230, 57, 70, 0.15)",
-                          color: res.status === "active" ? "#2a9d8f" : "#e63946"
-                        }}>
+                    <tr key={res.id}>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <img
+                            src={res.logo || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop"}
+                            alt={res.name}
+                            style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }}
+                          />
+                          <span style={{ fontWeight: "600" }}>{res.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ fontFamily: "monospace", color: "var(--text-muted)", fontSize: "0.82rem" }}>{res.id}</td>
+                      <td style={{ color: "var(--text-secondary)" }}>{res.adminEmail || "N/A"}</td>
+                      <td>
+                        <span className={`sa-badge ${res.status === "active" ? "sa-badge-success" : "sa-badge-danger"}`}>
                           {res.status === "active" ? "ACTIVE" : "INACTIVE"}
                         </span>
                       </td>
-                      <td style={{ padding: "12px", textAlign: "right" }}>
+                      <td style={{ textAlign: "right" }}>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                           <Link
                             to={`/superadmin/restaurants/${res.id}`}
-                            className="btn btn-outline"
-                            style={{ fontSize: "0.8rem", padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                            className="sa-icon-btn"
+                            title="Inspect Restaurant"
                           >
-                            <Eye size={14} />
-                            <span>Inspect</span>
+                            <Eye size={16} />
                           </Link>
                           <button
                             onClick={() => handleOpenAdmin(res.id, res.name)}
-                            className="btn btn-secondary"
-                            style={{ fontSize: "0.8rem", padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                            className="sa-icon-btn"
+                            title="Open Admin Panel"
                           >
-                            <ExternalLink size={14} />
-                            <span>Open Admin</span>
+                            <ExternalLink size={16} />
                           </button>
                         </div>
                       </td>

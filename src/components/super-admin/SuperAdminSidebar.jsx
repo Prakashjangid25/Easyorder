@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Store, Settings, LogOut, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Store, Settings, LogOut, ShieldCheck, Sparkles } from "lucide-react";
 import { useToast } from "../../context/ToastContext.jsx";
 
 export default function SuperAdminSidebar() {
@@ -21,27 +21,58 @@ export default function SuperAdminSidebar() {
   ];
 
   return (
-    <aside className="admin-sidebar" id="super-admin-sidebar" style={{ width: "250px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+    <aside
+      className="admin-sidebar sa-scroll"
+      id="super-admin-sidebar"
+      style={{
+        width: "260px",
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+        background: "var(--surface-color)",
+        borderRight: "1px solid var(--border-color)",
+        position: "sticky",
+        top: 0,
+        height: "100vh",
+        overflowY: "auto"
+      }}
+    >
       {/* Brand Header */}
-      <div className="sidebar-brand" style={{ padding: "24px 20px", borderBottom: "1px solid var(--border-color)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <div style={{ padding: "24px 20px", borderBottom: "1px solid var(--border-color)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{
-            width: "36px",
-            height: "36px",
-            borderRadius: "10px",
-            backgroundColor: "var(--primary-color)",
+            width: "42px",
+            height: "42px",
+            borderRadius: "14px",
+            background: "linear-gradient(135deg, #e63946 0%, #ff6b6b 100%)",
             color: "#ffffff",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
+            boxShadow: "0 4px 12px rgba(230, 57, 70, 0.3)"
           }}>
-            <ShieldCheck size={20} />
+            <ShieldCheck size={22} />
           </div>
           <div>
-            <div style={{ fontWeight: "800", fontSize: "1.05rem", color: "var(--text-primary)" }}>
+            <div style={{
+              fontWeight: "800",
+              fontSize: "1.1rem",
+              color: "var(--text-primary)",
+              letterSpacing: "-0.3px"
+            }}>
               EasyOrder
             </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "700" }}>
+            <div style={{
+              fontSize: "0.7rem",
+              color: "var(--primary-color)",
+              textTransform: "uppercase",
+              letterSpacing: "1.2px",
+              fontWeight: "700",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}>
+              <Sparkles size={10} />
               Super Admin
             </div>
           </div>
@@ -49,26 +80,14 @@ export default function SuperAdminSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav style={{ padding: "16px 12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+      <nav style={{ padding: "16px 12px", display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path || (item.path !== "/superadmin/dashboard" && location.pathname.startsWith(item.path));
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`sidebar-link ${isActive ? "active" : ""}`}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                padding: "12px 16px",
-                borderRadius: "10px",
-                color: isActive ? "var(--primary-color)" : "var(--text-secondary)",
-                backgroundColor: isActive ? "rgba(230, 57, 70, 0.08)" : "transparent",
-                fontWeight: isActive ? "700" : "500",
-                textDecoration: "none",
-                transition: "all 0.2s ease"
-              }}
+              className={`sa-sidebar-link ${isActive ? "active" : ""}`}
             >
               {item.icon}
               <span>{item.label}</span>
@@ -77,8 +96,40 @@ export default function SuperAdminSidebar() {
         })}
       </nav>
 
-      {/* Logout Action */}
-      <div style={{ marginTop: "auto", padding: "16px 12px", borderTop: "1px solid var(--border-color)" }}>
+      {/* User Info & Logout */}
+      <div style={{ padding: "16px 12px", borderTop: "1px solid var(--border-color)" }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          padding: "10px 12px",
+          borderRadius: "12px",
+          background: "var(--surface-hover)",
+          marginBottom: "12px"
+        }}>
+          <div style={{
+            width: "32px",
+            height: "32px",
+            borderRadius: "10px",
+            background: "linear-gradient(135deg, #457b9d 0%, #5fa8d3 100%)",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "0.75rem",
+            fontWeight: "700"
+          }}>
+            SA
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "0.82rem", fontWeight: "700", color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              Super Admin
+            </div>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+              Platform Owner
+            </div>
+          </div>
+        </div>
         <button
           onClick={handleLogout}
           style={{
@@ -87,13 +138,22 @@ export default function SuperAdminSidebar() {
             alignItems: "center",
             gap: "10px",
             padding: "12px 16px",
-            borderRadius: "8px",
-            border: "1px solid var(--border-color)",
-            backgroundColor: "transparent",
-            color: "var(--status-cancelled, #e63946)",
+            borderRadius: "12px",
+            border: "1px solid rgba(230, 57, 70, 0.2)",
+            backgroundColor: "rgba(230, 57, 70, 0.05)",
+            color: "#e63946",
             fontSize: "0.85rem",
             fontWeight: "600",
-            cursor: "pointer"
+            cursor: "pointer",
+            transition: "all 0.25s ease"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(230, 57, 70, 0.1)";
+            e.currentTarget.style.transform = "translateX(2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(230, 57, 70, 0.05)";
+            e.currentTarget.style.transform = "translateX(0)";
           }}
         >
           <LogOut size={16} />
