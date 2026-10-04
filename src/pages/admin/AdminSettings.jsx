@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useToast } from "../../context/ToastContext.jsx";
-import { Settings, Save, AlertCircle, ShoppingBag, Eye, HelpCircle } from "lucide-react";
+import { Settings, Save, AlertCircle, ShoppingBag, Eye, HelpCircle, CreditCard } from "lucide-react";
 
 export default function AdminSettings() {
   const { settings, updateSettings, activeRestaurantId } = useSettings();
@@ -23,7 +23,12 @@ export default function AdminSettings() {
     closingTime: settings.closingTime || "22:00",
     isOpen: settings.isOpen !== undefined ? settings.isOpen : true,
     footerText: settings.footerText || "",
-    copyright: settings.copyright || ""
+    copyright: settings.copyright || "",
+    paymentCashEnabled: settings.paymentCashEnabled !== undefined ? settings.paymentCashEnabled : true,
+    paymentUpiEnabled: settings.paymentUpiEnabled !== undefined ? settings.paymentUpiEnabled : true,
+    paymentUpiId: settings.paymentUpiId || "",
+    paymentUpiPayeeName: settings.paymentUpiPayeeName || "",
+    paymentNotePrefix: settings.paymentNotePrefix || "EasyOrder"
   });
 
   // Keep form in sync when active restaurant or settings context changes
@@ -43,7 +48,12 @@ export default function AdminSettings() {
       closingTime: settings.closingTime || "22:00",
       isOpen: settings.isOpen !== undefined ? settings.isOpen : true,
       footerText: settings.footerText || "",
-      copyright: settings.copyright || ""
+      copyright: settings.copyright || "",
+      paymentCashEnabled: settings.paymentCashEnabled !== undefined ? settings.paymentCashEnabled : true,
+      paymentUpiEnabled: settings.paymentUpiEnabled !== undefined ? settings.paymentUpiEnabled : true,
+      paymentUpiId: settings.paymentUpiId || "",
+      paymentUpiPayeeName: settings.paymentUpiPayeeName || "",
+      paymentNotePrefix: settings.paymentNotePrefix || "EasyOrder"
     });
   }, [settings, activeRestaurantId]);
 
@@ -322,7 +332,84 @@ export default function AdminSettings() {
                 </div>
               </div>
 
-              {/* Card 4: Footer */}
+              {/* Card 4: Payment Settings */}
+              <div className="card">
+                <h2 style={{ fontSize: "1.2rem", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CreditCard size={18} /> Payment Acceptance & UPI QR
+                </h2>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "16px" }}>
+                  Configure UPI QR details so customers can scan and pay directly after placing an order.
+                </p>
+
+                <div className="grid-2" style={{ marginBottom: "16px" }}>
+                  <label className="flex align-center gap-3" style={{ cursor: "pointer", fontWeight: "700" }}>
+                    <input
+                      type="checkbox"
+                      name="paymentCashEnabled"
+                      checked={formData.paymentCashEnabled}
+                      onChange={handleChange}
+                      style={{ transform: "scale(1.2)", cursor: "pointer" }}
+                    />
+                    Accept Cash / Pay at Counter
+                  </label>
+                  <label className="flex align-center gap-3" style={{ cursor: "pointer", fontWeight: "700" }}>
+                    <input
+                      type="checkbox"
+                      name="paymentUpiEnabled"
+                      checked={formData.paymentUpiEnabled}
+                      onChange={handleChange}
+                      style={{ transform: "scale(1.2)", cursor: "pointer" }}
+                    />
+                    Accept UPI QR Payments
+                  </label>
+                </div>
+
+                <div className="grid-2">
+                  <div className="input-group">
+                    <label className="input-label" htmlFor="paymentUpiId">UPI ID / VPA</label>
+                    <input
+                      id="paymentUpiId"
+                      type="text"
+                      name="paymentUpiId"
+                      className="input-field"
+                      placeholder="yourname@bank"
+                      value={formData.paymentUpiId}
+                      onChange={handleChange}
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label className="input-label" htmlFor="paymentUpiPayeeName">UPI Payee Name</label>
+                    <input
+                      id="paymentUpiPayeeName"
+                      type="text"
+                      name="paymentUpiPayeeName"
+                      className="input-field"
+                      placeholder={formData.restaurantName || "Restaurant Name"}
+                      value={formData.paymentUpiPayeeName}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label" htmlFor="paymentNotePrefix">UPI Payment Note Prefix</label>
+                  <input
+                    id="paymentNotePrefix"
+                    type="text"
+                    name="paymentNotePrefix"
+                    className="input-field"
+                    placeholder="EasyOrder"
+                    value={formData.paymentNotePrefix}
+                    onChange={handleChange}
+                  />
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.78rem", marginTop: "6px" }}>
+                    This appears inside the UPI app note, followed by the order ID.
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 5: Footer */}
               <div className="card">
                 <h2 style={{ fontSize: "1.2rem", marginBottom: "20px" }}>Page Footer & Copyright Texts</h2>
 

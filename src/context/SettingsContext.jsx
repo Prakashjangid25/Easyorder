@@ -20,7 +20,12 @@ export const defaultSettings = {
   closingTime: "22:00",
   isOpen: true,
   footerText: "We cook with love and serve with passion.",
-  copyright: "© 2026 EasyOrder. All rights reserved."
+  copyright: "© 2026 EasyOrder. All rights reserved.",
+  paymentCashEnabled: true,
+  paymentUpiEnabled: true,
+  paymentUpiId: "",
+  paymentUpiPayeeName: "",
+  paymentNotePrefix: "EasyOrder"
 };
 
 export function SettingsProvider({ children }) {

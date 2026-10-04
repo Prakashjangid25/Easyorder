@@ -5,7 +5,9 @@ import { db } from "../../firebase/firebase.js";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useCart } from "../../context/CartContext.jsx";
 import { Check, ArrowLeft, Clock, PhoneCall } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { formatCurrency } from "../../utils/format.js";
+import { buildUpiPaymentUri } from "../../utils/upi.js";
 
 export default function OrderSuccess() {
   const { orderId } = useParams();
@@ -150,6 +152,18 @@ export default function OrderSuccess() {
     );
   }
 
+  const paymentAmount = Number(order.totalAmount || 0);
+  const upiPaymentUri =
+    order.paymentMethod === "upi" && settings.paymentUpiId
+      ? buildUpiPaymentUri({
+          upiId: settings.paymentUpiId,
+          payeeName: settings.paymentUpiPayeeName || settings.restaurantName,
+          amount: paymentAmount,
+          note: settings.paymentNotePrefix || "EasyOrder",
+          orderId: order.id,
+        })
+      : "";
+
   const statuses = ["pending", "preparing", "ready", "completed"];
   const currentStatusIndex = statuses.indexOf(order.status);
 
@@ -248,6 +262,60 @@ export default function OrderSuccess() {
           </div>
         </div>
       </div>
+
+      {/* Payment Collection Panel */}
+      {order.paymentMethod === "upi" && (
+        <div className="card" id="upi-payment-panel" style={{ marginTop: "24px" }}>
+          <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Complete Payment</h2>
+          {order.paymentStatus === "paid" ? (
+            <p style={{ color: "var(--status-completed)", fontWeight: "700" }}>Payment received for this order. Thank you!</p>
+          ) : settings.paymentUpiId ? (
+            <>
+              <p style={{ color: "var(--text-secondary)", marginBottom: "20px" }}>
+                Scan the QR code with any UPI app, or tap the button below from a phone with UPI installed.
+              </p>
+              <div className="flex align-center gap-3 flex-wrap">
+                <div style={{ backgroundColor: "#ffffff", padding: "12px", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
+                  <QRCodeSVG value={upiPaymentUri} size={180} />
+                </div>
+                <div style={{ minWidth: "220px", flex: 1 }}>
+                  <div style={{ marginBottom: "10px" }}>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase", fontWeight: 700 }}>Amount</span>
+                    <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--primary-color)" }}>{formatCurrency(paymentAmount)}</div>
+                  </div>
+                  <div style={{ marginBottom: "10px" }}>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", textTransform: "uppercase", fontWeight: 700 }}>UPI ID</span>
+                    <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>{settings.paymentUpiId}</div>
+                  </div>
+                  <a
+                    className="btn btn-primary"
+                    href={upiPaymentUri}
+                    style={{ display: "inline-flex", marginTop: "8px", textDecoration: "none" }}
+                  >
+                    Open UPI App
+                  </a>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginTop: "12px" }}>
+                    After paying, please wait here or show the payment confirmation to our staff.
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p style={{ color: "var(--status-cancelled)" }}>
+              UPI QR is not configured for this restaurant yet. Please pay by cash/card at the counter.
+            </p>
+          )}
+        </div>
+      )}
+
+      {order.paymentMethod === "cash" && order.paymentStatus !== "paid" && (
+        <div className="card" id="cash-payment-panel" style={{ marginTop: "24px" }}>
+          <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Payment</h2>
+          <p style={{ color: "var(--text-secondary)" }}>
+            Please pay {formatCurrency(paymentAmount)} at the counter or to the server. Your kitchen order is already active.
+          </p>
+        </div>
+      )}
 
       {/* Real-time Status Tracker Timeline */}
       <div className="card order-status-card" id="success-tracking-timeline-panel" style={{ marginTop: "24px" }}>

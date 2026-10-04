@@ -115,6 +115,28 @@ export default function AdminOrders() {
     }
   };
 
+  const updatePaymentStatus = async (orderId, nextPaymentStatus) => {
+    try {
+      const docPath = activeRestaurantId && activeRestaurantId !== "default"
+        ? `restaurants/${activeRestaurantId}/orders/${orderId}`
+        : `orders/${orderId}`;
+
+      const orderRef = doc(db, docPath);
+      const payload = { paymentStatus: nextPaymentStatus };
+      if (nextPaymentStatus === "paid") {
+        payload.paidAt = new Date().toISOString();
+      }
+      await updateDoc(orderRef, payload);
+      showToast(`Payment marked as: ${nextPaymentStatus}`, "success");
+
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder((prev) => ({ ...prev, ...payload }));
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `orders/${orderId}`);
+    }
+  };
+
   // Filter orders based on active tab and search query
   const filteredOrders = orders.filter((o) => {
     const matchesTab = activeTab === "all" || o.status === activeTab;
@@ -244,6 +266,10 @@ export default function AdminOrders() {
                         {formatCurrency(o.totalAmount)}
                       </span>
                     </div>
+
+                    <div style={{ marginTop: "8px", fontSize: "0.8rem", color: o.paymentStatus === "paid" ? "var(--status-completed)" : "var(--text-muted)", fontWeight: 700 }}>
+                      Payment: {(o.paymentMethod || "not-set").toUpperCase()} • {(o.paymentStatus || (o.paymentMethod === "upi" ? "awaiting_payment" : "pending")).replaceAll("_", " ")}
+                    </div>
                   </div>
                 );
               })
@@ -319,6 +345,38 @@ export default function AdminOrders() {
                       <div style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
                         This order is archived as <strong>{selectedOrder.status.toUpperCase()}</strong>.
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Payment confirmation */}
+                <div>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "600", textTransform: "uppercase" }}>Payment</span>
+                  <div style={{ marginTop: "8px", padding: "12px", border: "1px solid var(--border-color)", borderRadius: "8px", backgroundColor: "var(--surface-hover)" }}>
+                    <div className="flex justify-between align-center flex-wrap gap-2">
+                      <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+                        Method: <strong>{(selectedOrder.paymentMethod || "cash/manual").toUpperCase()}</strong>
+                      </span>
+                      <span
+                        style={{
+                          fontWeight: 800,
+                          fontSize: "0.85rem",
+                          color: selectedOrder.paymentStatus === "paid" ? "var(--status-completed)" : "var(--status-pending)",
+                          textTransform: "uppercase"
+                        }}
+                      >
+                        {(selectedOrder.paymentStatus || (selectedOrder.paymentMethod === "upi" ? "awaiting_payment" : "pending")).replaceAll("_", " ")}
+                      </span>
+                    </div>
+
+                    {selectedOrder.paymentStatus !== "paid" && selectedOrder.status !== "cancelled" && (
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => updatePaymentStatus(selectedOrder.id, "paid")}
+                        style={{ marginTop: "12px", width: "100%" }}
+                      >
+                        <CheckCircle size={16} /> Mark Payment Received
+                      </button>
                     )}
                   </div>
                 </div>

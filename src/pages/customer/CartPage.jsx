@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "../../context/CartContext.jsx";
 import { useSettings } from "../../context/SettingsContext.jsx";
 import { useNavigate } from "react-router-dom";
@@ -36,6 +36,25 @@ export default function CartPage() {
   const gstAmount = subtotal * gstRate;
   const totalAmount = subtotal + gstAmount;
 
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+
+  useEffect(() => {
+    if (settings.paymentUpiEnabled !== false && settings.paymentUpiId) {
+      setPaymentMethod((prev) => (prev === "upi" || prev === "cash" ? prev : "upi"));
+    } else if (settings.paymentCashEnabled !== false) {
+      setPaymentMethod((prev) => (prev === "cash" ? prev : "cash"));
+    }
+  }, [settings.paymentUpiEnabled, settings.paymentUpiId, settings.paymentCashEnabled]);
+
+  useEffect(() => {
+    if (settings.paymentUpiEnabled !== false && settings.paymentUpiId && paymentMethod !== "upi" && settings.paymentCashEnabled === false) {
+      setPaymentMethod("upi");
+    }
+    if (settings.paymentCashEnabled !== false && paymentMethod !== "cash" && settings.paymentUpiEnabled === false) {
+      setPaymentMethod("cash");
+    }
+  }, [settings.paymentUpiEnabled, settings.paymentUpiId, settings.paymentCashEnabled, paymentMethod]);
+
   const handlePlaceOrder = async () => {
     if (cart.length === 0) {
       showToast("Your cart is empty", "error");
@@ -47,8 +66,13 @@ export default function CartPage() {
       return;
     }
 
+    if (paymentMethod === "upi" && !settings.paymentUpiId) {
+      showToast("Restaurant UPI ID is not configured yet. Please choose cash or ask staff.", "error");
+      return;
+    }
+
     showToast("Submitting your order to the kitchen...", "info");
-    const orderId = await placeOrder();
+    const orderId = await placeOrder(undefined, { paymentMethod });
     
     if (orderId) {
       navigate(`/order-success/${orderId}`);
@@ -166,13 +190,43 @@ export default function CartPage() {
               </div>
             </div>
 
+            <div style={{ marginTop: "24px", borderTop: "1px solid var(--border-color)", paddingTop: "20px" }}>
+              <div className="input-label" style={{ marginBottom: "10px" }}>Payment Method</div>
+
+              {settings.paymentUpiEnabled !== false && (
+                <label className="flex align-center gap-2" style={{ marginBottom: "8px", cursor: "pointer", fontWeight: paymentMethod === "upi" ? 700 : 500 }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="upi"
+                    checked={paymentMethod === "upi"}
+                    onChange={() => setPaymentMethod("upi")}
+                  />
+                  UPI QR {settings.paymentUpiId ? "(recommended)" : "(set UPI ID in admin settings)"}
+                </label>
+              )}
+
+              {settings.paymentCashEnabled !== false && (
+                <label className="flex align-center gap-2" style={{ cursor: "pointer", fontWeight: paymentMethod === "cash" ? 700 : 500 }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="cash"
+                    checked={paymentMethod === "cash"}
+                    onChange={() => setPaymentMethod("cash")}
+                  />
+                  Cash / Pay at Counter
+                </label>
+              )}
+            </div>
+
             <button
               className="btn btn-primary"
               style={{ width: "100%", padding: "14px", marginTop: "24px", fontSize: "1.05rem" }}
               onClick={handlePlaceOrder}
               id="place-order-submit-btn"
             >
-              Send to Kitchen (Place Order)
+              {paymentMethod === "upi" ? "Place Order & Pay with UPI QR" : "Send to Kitchen (Place Order)"}
             </button>
           </div>
         </div>

@@ -92,7 +92,7 @@ export function CartProvider({ children }) {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
-  const placeOrder = async (overrideRestaurantId = restaurantId) => {
+  const placeOrder = async (overrideRestaurantId = restaurantId, options = {}) => {
     if (cart.length === 0 || !tableNumber) return null;
 
     const targetResId = overrideRestaurantId || restaurantId;
@@ -109,13 +109,22 @@ export function CartProvider({ children }) {
       const orderId = orderRef.id;
 
       const orderDate = new Date();
+      const subtotalAmount = getCartTotal();
+      const gstAmount = Math.round(subtotalAmount * 0.05 * 100) / 100;
+      const grandTotal = Math.round((subtotalAmount + gstAmount) * 100) / 100;
+      const paymentMethod = options.paymentMethod || "cash";
+      const paymentStatus = paymentMethod === "upi" ? "awaiting_payment" : "pay_on_delivery";
       const orderData = {
         id: orderId,
         restaurantId: targetResId,
         tableNumber: tableNumber,
         status: "pending",
         customerNotes: specialInstructions,
-        totalAmount: getCartTotal(),
+        subtotalAmount,
+        taxAmount: gstAmount,
+        totalAmount: grandTotal,
+        paymentMethod,
+        paymentStatus,
         createdAt: orderDate.toISOString(),
         orderDate: orderDate.toLocaleDateString(),
         orderTime: orderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
