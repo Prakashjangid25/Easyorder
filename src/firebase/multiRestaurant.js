@@ -1,5 +1,5 @@
 import { initializeApp, deleteApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updatePassword } from "firebase/auth";
 import { 
   collection, 
   doc, 
@@ -34,6 +34,10 @@ export const DEFAULT_SETTINGS = {
 /**
  * Creates a real Firebase Auth user on a secondary Firebase app instance
  * so that the currently logged-in Super Admin session is NEVER disturbed or signed out.
+ * 
+ * If the email already exists in Firebase Auth, it will try to sign in with the
+ * provided credentials and update the password. This handles the case where a
+ * restaurant was deleted but the auth user remained.
  */
 export async function createRestaurantAuthUser(email, password) {
   if (!email || !email.includes("@")) {
@@ -48,6 +52,7 @@ export async function createRestaurantAuthUser(email, password) {
   const secondaryAuth = getAuth(secondaryApp);
 
   try {
+    // Try to create a new user
     const userCredential = await createUserWithEmailAndPassword(
       secondaryAuth,
       email.trim(),
@@ -58,10 +63,33 @@ export async function createRestaurantAuthUser(email, password) {
     await deleteApp(secondaryApp);
     return uid;
   } catch (error) {
-    await deleteApp(secondaryApp).catch(() => {});
+    // If email already exists, try to sign in and update password
     if (error.code === "auth/email-already-in-use") {
-      throw new Error("This email is already registered.");
+      try {
+        const secondaryAppName2 = `SecondaryAuthUpdate_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        const secondaryApp2 = initializeApp(firebaseConfig, secondaryAppName2);
+        const secondaryAuth2 = getAuth(secondaryApp2);
+
+        const userCredential = await signInWithEmailAndPassword(
+          secondaryAuth2,
+          email.trim(),
+          password
+        );
+        const uid = userCredential.user.uid;
+        await signOut(secondaryAuth2);
+        await deleteApp(secondaryApp2);
+        await deleteApp(secondaryApp).catch(() => {});
+        return uid;
+      } catch (signInError) {
+        await deleteApp(secondaryApp).catch(() => {});
+        if (signInError.code === "auth/wrong-password" || signInError.code === "auth/invalid-credential") {
+          throw new Error("This email is already registered with a different password. Please use a different email or contact support.");
+        }
+        throw new Error("This email is already registered. Please use a different email.");
+      }
     }
+
+    await deleteApp(secondaryApp).catch(() => {});
     if (error.code === "auth/invalid-email") {
       throw new Error("Invalid email format.");
     }
@@ -189,7 +217,7 @@ export async function createRestaurant(data) {
       (r) => r.adminEmail && r.adminEmail.toLowerCase() === adminEmail.toLowerCase()
     );
     if (existingByEmail) {
-      throw new Error("This email is already registered.");
+      throw new Error(`A restaurant with email "${adminEmail}" already exists (ID: ${existingByEmail.id}). Please use a different email or delete the existing restaurant first.`);
     }
 
     // 2. Create REAL Firebase Auth Account using secondary auth app so Super Admin is NOT signed out
@@ -354,10 +382,27 @@ export async function updateRestaurant(restaurantId, updates) {
 }
 
 /**
- * Delete a restaurant
+ * Delete a restaurant and all its subcollections
  */
 export async function deleteRestaurant(restaurantId) {
   try {
+    // Delete all subcollections first
+    const subcollections = ["settings", "categories", "products", "tables", "orders", "orderItems"];
+    
+    for (const sub of subcollections) {
+      try {
+        const snap = await getDocs(collection(db, `restaurants/${restaurantId}/${sub}`));
+        const batch = writeBatch(db);
+        snap.forEach((d) => {
+          batch.delete(d.ref);
+        });
+        await batch.commit();
+      } catch (e) {
+        // Subcollection might not exist, ignore
+      }
+    }
+
+    // Delete the main restaurant document
     const resRef = doc(db, "restaurants", restaurantId);
     await deleteDoc(resRef);
   } catch (error) {
