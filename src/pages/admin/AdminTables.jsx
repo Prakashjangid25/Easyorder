@@ -225,7 +225,7 @@ export default function AdminTables() {
       </div>
 
       {/* Layout Grid */}
-      <div className="grid" style={{ gridTemplateColumns: "1.2fr 1fr", gap: "32px", alignItems: "start" }}>
+      <div className="admin-tables-layout" id="admin-tables-layout-grid">
         {/* Create Table Form & List */}
         <div className="card" id="tables-list-panel">
           <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -297,7 +297,7 @@ export default function AdminTables() {
         </div>
 
         {/* Selected Table QR Card Console */}
-        <div style={{ position: "sticky", top: "96px" }} id="table-qr-console-panel">
+        <div className="admin-tables-console" id="table-qr-console-panel">
           {selectedTableQR ? (
             <div className="card" style={{ padding: "24px", textAlign: "center", display: "flex", flexDirection: "column", gap: "18px" }}>
               <div className="flex justify-between align-center">
