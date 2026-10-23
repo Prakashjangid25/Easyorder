@@ -583,8 +583,83 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
-/* Keep QR cards printable */
-@media print {
+/* Force premium visual layer over legacy inline styles */
+.card, .gate-card, .modal-content {
+  background: linear-gradient(180deg, var(--eo-surface) 0%, var(--eo-surface-strong) 100%) !important;
+  border: 1px solid var(--eo-border) !important;
+  border-radius: var(--eo-radius-md) !important;
+  box-shadow: var(--eo-shadow-sm) !important;
+  backdrop-filter: var(--eo-blur) !important;
+}
+
+.btn {
+  border-radius: var(--eo-radius-sm) !important;
+  box-shadow: var(--eo-shadow-xs) !important;
+  font-weight: 700 !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--eo-primary) 0%, var(--eo-primary-strong) 100%) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+.btn-outline {
+  background: var(--eo-surface) !important;
+  color: var(--eo-text) !important;
+  border: 1px solid var(--eo-border) !important;
+}
+
+.input-field, .search-input, .sa-input {
+  background: var(--eo-surface-muted) !important;
+  border: 1px solid var(--eo-border) !important;
+  border-radius: var(--eo-radius-xs) !important;
+  color: var(--eo-text) !important;
+  box-shadow: none !important;
+}
+
+.app-header {
+  background: rgba(255, 255, 255, 0.76) !important;
+  backdrop-filter: var(--eo-blur) !important;
+  border-bottom: 1px solid var(--eo-border) !important;
+}
+
+[data-theme="dark"] .app-header {
+  background: rgba(15, 23, 42, 0.76) !important;
+}
+
+.admin-sidebar {
+  background: linear-gradient(180deg, var(--eo-surface-strong) 0%, var(--eo-surface-muted) 100%) !important;
+  border-right: 1px solid var(--eo-border) !important;
+}
+
+.admin-content-area {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(255, 77, 90, 0.07), transparent 28%),
+    radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.07), transparent 28%),
+    var(--eo-bg-soft) !important;
+}
+
+.stat-card, .sa-stat-card, .sa-glass-card {
+  background: linear-gradient(180deg, var(--eo-surface-strong) 0%, var(--eo-surface) 100%) !important;
+  border: 1px solid var(--eo-border) !important;
+  border-radius: var(--eo-radius-md) !important;
+  box-shadow: var(--eo-shadow-xs) !important;
+}
+
+.modal-content, .sa-modal-content {
+  background: var(--eo-surface-strong) !important;
+  border: 1px solid var(--eo-border) !important;
+  border-radius: var(--eo-radius-lg) !important;
+  box-shadow: var(--eo-shadow-lg) !important;
+}
+
+.toast {
+  background: var(--eo-surface-strong) !important;
+  border: 1px solid var(--eo-border) !important;
+  border-radius: var(--eo-radius-sm) !important;
+  box-shadow: var(--eo-shadow-md) !important;
+}
   .card, .sa-glass-card {
     box-shadow: none !important;
     backdrop-filter: none !important;
