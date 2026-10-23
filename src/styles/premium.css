@@ -668,21 +668,19 @@ select:focus-visible {
 
 /* Admin Tables responsive layout */
 .admin-tables-layout {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 388px;
   gap: clamp(16px, 2vw, 24px);
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
 }
 
 .admin-tables-main {
-  flex: 1 1 640px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .admin-tables-aside {
-  flex: 0 1 388px;
-  max-width: 100%;
   min-width: 0;
   width: 100%;
 }
@@ -701,13 +699,11 @@ select:focus-visible {
 
 @media (max-width: 1180px) {
   .admin-tables-layout {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
-  .admin-tables-main,
   .admin-tables-aside,
   .admin-tables-console {
-    flex-basis: 100%;
     max-width: 100%;
   }
 
