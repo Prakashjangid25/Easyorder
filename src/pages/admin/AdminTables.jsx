@@ -227,7 +227,7 @@ export default function AdminTables() {
       {/* Layout Grid */}
       <div className="admin-tables-layout" id="admin-tables-layout-grid">
         {/* Create Table Form & List */}
-        <div className="card" id="tables-list-panel">
+        <div className="admin-tables-main card" id="tables-list-panel">
           <h2 style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
             <Table size={18} /> Dining Tables ({tables.length})
           </h2>
@@ -263,8 +263,12 @@ export default function AdminTables() {
                 return (
                   <div
                     key={t.id}
-                    className="flex justify-between align-center flex-wrap gap-2"
+                    className="admin-table-row"
                     style={{
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1fr) auto",
+                      gap: "12px",
+                      alignItems: "center",
                       padding: "12px 16px",
                       backgroundColor: isSelected ? "rgba(230, 57, 70, 0.05)" : "var(--surface-hover)",
                       border: isSelected ? "1.5px solid var(--primary-color)" : "1.5px solid transparent",
@@ -297,7 +301,7 @@ export default function AdminTables() {
         </div>
 
         {/* Selected Table QR Card Console */}
-        <div className="admin-tables-console" id="table-qr-console-panel">
+        <div className="admin-tables-aside admin-tables-console" id="table-qr-console-panel">
           {selectedTableQR ? (
             <div className="card" style={{ padding: "24px", textAlign: "center", display: "flex", flexDirection: "column", gap: "18px" }}>
               <div className="flex justify-between align-center">

@@ -668,27 +668,53 @@ select:focus-visible {
 
 /* Admin Tables responsive layout */
 .admin-tables-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
-  gap: clamp(18px, 2vw, 28px);
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 2vw, 24px);
+  align-items: flex-start;
+  width: 100%;
+}
+
+.admin-tables-main {
+  flex: 1 1 640px;
+  min-width: 0;
+}
+
+.admin-tables-aside {
+  flex: 0 1 388px;
+  max-width: 100%;
+  min-width: 0;
   width: 100%;
 }
 
 .admin-tables-console {
   position: sticky;
   top: 96px;
+  width: 100%;
+  max-width: 388px;
+  margin-inline: auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 @media (max-width: 1180px) {
   .admin-tables-layout {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .admin-tables-main,
+  .admin-tables-aside,
+  .admin-tables-console {
+    flex-basis: 100%;
+    max-width: 100%;
   }
 
   .admin-tables-console {
     position: static;
     top: auto;
+    margin-inline: auto;
   }
 }
 
@@ -781,7 +807,7 @@ select:focus-visible {
 
 @media screen {
   .qr-card-rendered {
-    width: min(100%, 360px) !important;
+    width: min(100%, 340px) !important;
     max-width: 100% !important;
   }
 }
