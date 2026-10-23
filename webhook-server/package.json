@@ -1,0 +1,14 @@
+{
+  "name": "easyorder-youpi-webhook-server",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "firebase": "^12.16.0"
+  }
+}

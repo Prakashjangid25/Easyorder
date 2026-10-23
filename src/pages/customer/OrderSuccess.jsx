@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { doc, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { useSettings } from "../../context/SettingsContext.jsx";
@@ -17,6 +17,9 @@ export default function OrderSuccess() {
   const { settings, activeRestaurantId } = useSettings();
   const { clearTableNumber, clearCart } = useCart();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const urlPayment = searchParams.get("payment");
+  const urlUtr = searchParams.get("utr");
 
   const handleReturnToMenu = () => {
     if (activeRestaurantId && activeRestaurantId !== "default") {
@@ -264,7 +267,17 @@ export default function OrderSuccess() {
       </div>
 
       {/* Payment Collection Panel */}
-      {order.paymentMethod === "upi" && (
+      {urlPayment === "verified" && order.paymentMethod === "upi" && (
+        <div className="card" id="upi-payment-verified-panel" style={{ marginTop: "24px" }}>
+          <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Payment Confirmed ✅</h2>
+          <p style={{ color: "var(--status-completed)", fontWeight: "700" }}>
+            Your UPI payment has been verified successfully.
+            {urlUtr ? ` UTR: ${urlUtr}` : ""}
+          </p>
+        </div>
+      )}
+
+      {order.paymentMethod === "upi" && urlPayment !== "verified" && (
         <div className="card" id="upi-payment-panel" style={{ marginTop: "24px" }}>
           <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Complete Payment</h2>
           {order.paymentStatus === "paid" ? (

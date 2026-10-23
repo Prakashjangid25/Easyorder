@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Trash2, UtensilsCrossed, AlertCircle } from "lucide-react";
 import { useToast } from "../../context/ToastContext.jsx";
 import { formatCurrency } from "../../utils/format.js";
+import { youpiPay } from "../../utils/youpi.js";
 
 export default function CartPage() {
   const {
@@ -73,11 +74,36 @@ export default function CartPage() {
 
     showToast("Submitting your order to the kitchen...", "info");
     const orderId = await placeOrder(undefined, { paymentMethod });
-    
-    if (orderId) {
-      navigate(`/order-success/${orderId}`);
-    } else {
+
+    if (!orderId) {
       showToast("Failed to place your order. Please try again.", "error");
+      return;
+    }
+
+    if (paymentMethod === "upi" && settings.paymentUpiId) {
+      try {
+        showToast("Opening UPI payment...", "info");
+        await youpiPay({
+          orderId: orderId,
+          amount: totalAmount,
+          name: settings.restaurantName || "EasyOrder",
+          description: `Table ${tableNumber} - Order #${orderId.slice(-6)}`
+        }, {
+          onSuccess: (res) => {
+            navigate(`/order-success/${orderId}?payment=verified&utr=${res.utr || ""}`);
+          },
+          onClose: () => {
+            navigate(`/order-success/${orderId}?payment=pending`);
+          }
+        });
+      } catch (err) {
+        if (err.message !== 'user_closed') {
+          showToast("Payment could not be initiated. You can pay on the next screen.", "error");
+        }
+        navigate(`/order-success/${orderId}?payment=pending`);
+      }
+    } else {
+      navigate(`/order-success/${orderId}`);
     }
   };
 

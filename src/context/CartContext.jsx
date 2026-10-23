@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { collection, doc, writeBatch, serverTimestamp } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase.js";
 import { handleFirestoreError, OperationType } from "../firebase/errorHandler.js";
 
@@ -157,6 +157,19 @@ export function CartProvider({ children }) {
       });
 
       await batch.commit();
+
+      // Root-level mapping so YouPI webhook can find restaurantId
+      try {
+        await setDoc(doc(db, 'youpi_order_map', orderId), {
+          orderId,
+          restaurantId: targetResId,
+          paymentMethod: paymentMethod,
+          totalAmount: grandTotal,
+          createdAt: serverTimestamp()
+        });
+      } catch (mapErr) {
+        console.error('Could not save order mapping:', mapErr);
+      }
 
       clearCart();
       return orderId;
