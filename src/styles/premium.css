@@ -785,3 +785,41 @@ select:focus-visible {
     max-width: 100% !important;
   }
 }
+
+/* Catch legacy inline grids that do not use the .grid class */
+@media (max-width: 1024px) {
+  div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 1320px) {
+  .admin-content-area .grid,
+  .admin-content-area div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Global overflow safety */
+* {
+  min-width: 0;
+}
+
+img, svg, video, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+input, button, textarea, select {
+  max-width: 100%;
+}
+
+.admin-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+pre, code {
+  overflow-x: auto;
+  max-width: 100%;
+}
