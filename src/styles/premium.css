@@ -669,8 +669,8 @@ select:focus-visible {
 /* Admin Tables responsive layout */
 .admin-tables-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: clamp(16px, 2vw, 32px);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  gap: clamp(18px, 2vw, 28px);
   align-items: start;
   width: 100%;
 }
