@@ -232,7 +232,7 @@ export default function AdminTables() {
             <Table size={18} /> Dining Tables ({tables.length})
           </h2>
 
-          <form onSubmit={handleAddTable} className="flex gap-2" style={{ marginBottom: "24px", alignItems: "flex-end" }}>
+          <form onSubmit={handleAddTable} className="admin-table-form flex gap-2" style={{ marginBottom: "24px", alignItems: "flex-end" }}>
             <div className="input-group" style={{ marginBottom: 0, flex: 1 }}>
               <label className="input-label" htmlFor="table-name-create-input">Table Name / Number</label>
               <input
@@ -263,7 +263,7 @@ export default function AdminTables() {
                 return (
                   <div
                     key={t.id}
-                    className="flex justify-between align-center"
+                    className="flex justify-between align-center flex-wrap gap-2"
                     style={{
                       padding: "12px 16px",
                       backgroundColor: isSelected ? "rgba(230, 57, 70, 0.05)" : "var(--surface-hover)",

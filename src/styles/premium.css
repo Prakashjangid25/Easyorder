@@ -707,8 +707,81 @@ select:focus-visible {
   min-width: 0;
 }
 
+.admin-table-form {
+  align-items: flex-end;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .admin-table-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-table-form button {
+    width: 100%;
+  }
+}
+
+/* Global responsive safety net for legacy inline grids */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-content-area {
+    padding: 14px 10px !important;
+  }
+
+  .dashboard-header {
+    gap: 10px;
+  }
+
+  .admin-filters {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 6px;
+  }
+
+  .filter-btn {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding-inline: 12px;
+  }
+
+}
+
+/* Admin Tables fine-tuning */
 #admin-tables-content [id^="table-row-"] {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+}
+
+#admin-tables-content [id^="table-row-"] > div:first-child {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+#admin-tables-content [id^="table-row-"] span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#admin-tables-content [id^="table-row-"] > .flex {
+  flex-shrink: 0;
+}
+
+@media screen {
+  .qr-card-rendered {
+    width: min(100%, 360px) !important;
+    max-width: 100% !important;
+  }
 }
