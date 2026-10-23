@@ -301,7 +301,21 @@ export default function AdminTables() {
         </div>
 
         {/* Selected Table QR Card Console */}
-        <div className="admin-tables-aside admin-tables-console" id="table-qr-console-panel">
+        <div
+          className="admin-tables-aside admin-tables-console"
+          id="table-qr-console-panel"
+          style={{
+            width: "100%",
+            maxWidth: "388px",
+            marginInline: "auto",
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            position: "sticky",
+            top: "96px"
+          }}
+        >
           {selectedTableQR ? (
             <div className="card" style={{ padding: "24px", textAlign: "center", display: "flex", flexDirection: "column", gap: "18px" }}>
               <div className="flex justify-between align-center">

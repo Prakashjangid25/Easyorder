@@ -671,7 +671,7 @@ select:focus-visible {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 388px;
   gap: clamp(16px, 2vw, 24px);
-  align-items: center;
+  align-items: start;
   width: 100%;
 }
 
@@ -816,8 +816,7 @@ select:focus-visible {
 }
 
 @media (max-width: 1320px) {
-  .admin-content-area .grid,
-  .admin-content-area div[style*="grid-template-columns"] {
+  .admin-content-area .grid {
     grid-template-columns: 1fr !important;
   }
 }
