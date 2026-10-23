@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, doc, getDocs, writeBatch } from "firebase/firestore";
 import { db } from "../../firebase/firebase.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import { useSettings } from "../../context/SettingsContext.jsx";
@@ -132,10 +132,18 @@ export default function AdminMenu() {
   };
 
   const handleDeleteCategory = async (id) => {
-    if (window.confirm("Are you sure? This will delete the category.")) {
+    if (window.confirm("Are you sure? This will delete the category and all products inside it.")) {
       try {
-        await deleteDoc(doc(db, catsColPath, id));
-        showToast("Category deleted", "success");
+        const productsSnap = await getDocs(collection(db, prodsColPath));
+        const batch = writeBatch(db);
+        productsSnap.forEach((prodDoc) => {
+          if (prodDoc.data().categoryId === id) {
+            batch.delete(prodDoc.ref);
+          }
+        });
+        batch.delete(doc(db, catsColPath, id));
+        await batch.commit();
+        showToast("Category and its products deleted", "success");
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `categories/${id}`);
       }

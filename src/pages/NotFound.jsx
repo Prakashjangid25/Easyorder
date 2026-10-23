@@ -1,9 +1,19 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useSettings } from "../context/SettingsContext.jsx";
 import { Compass, ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
   const navigate = useNavigate();
+  const { activeRestaurantId } = useSettings();
+
+  const handleGoBack = () => {
+    if (activeRestaurantId && activeRestaurantId !== "default") {
+      navigate(`/menu/${activeRestaurantId}`);
+    } else {
+      navigate("/customer");
+    }
+  };
 
   return (
     <div className="table-gate-screen" id="not-found-page-container">
@@ -21,7 +31,7 @@ export default function NotFound() {
 
         <button
           className="btn btn-primary"
-          onClick={() => navigate("/customer")}
+          onClick={handleGoBack}
           style={{ width: "100%", gap: "8px", padding: "14px", fontSize: "1rem" }}
           id="not-found-go-back-btn"
         >

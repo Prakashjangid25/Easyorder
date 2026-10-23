@@ -88,7 +88,12 @@ export default function RestaurantMenu() {
           className="btn btn-outline"
           onClick={() => {
             clearTableNumber();
-          }}
+              if (activeRestaurantId && activeRestaurantId !== "default") {
+                navigate(`/menu/${activeRestaurantId}`);
+              } else {
+                navigate("/customer");
+              }
+            }}
           style={{
             display: "flex",
             alignItems: "center",

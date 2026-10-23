@@ -21,7 +21,8 @@ import {
 import SuperAdminSidebar from "../../components/super-admin/SuperAdminSidebar.jsx";
 import { getAllRestaurants, createRestaurant, updateRestaurant, deleteRestaurant, DEFAULT_SETTINGS } from "../../firebase/multiRestaurant.js";
 import { useSettings } from "../../context/SettingsContext.jsx";
-import { useToast } from "../../context/ToastContext.jsx";
+import { auth } from "../../firebase/firebase.js";
+import { sendPasswordResetEmail } from "firebase/auth";
 
 export default function SuperAdminRestaurants() {
   const [restaurants, setRestaurants] = useState([]);
@@ -158,7 +159,10 @@ export default function SuperAdminRestaurants() {
 
     try {
       await updateRestaurant(resetPassModal.id, { adminPassword: newPassword });
-      showToast(`Admin password reset for ${resetPassModal.name}`, "success");
+      if (resetPassModal.adminEmail) {
+        await sendPasswordResetEmail(auth, resetPassModal.adminEmail);
+      }
+      showToast(`Password reset email sent to ${resetPassModal.adminEmail || "admin"}`, "success");
       setResetPassModal(null);
       setNewPassword("");
       loadRestaurants();

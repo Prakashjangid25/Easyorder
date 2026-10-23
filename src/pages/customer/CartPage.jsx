@@ -34,8 +34,8 @@ export default function CartPage() {
 
   const subtotal = getCartTotal();
   const gstRate = 0.05; // Standard 5% GST for restaurants
-  const gstAmount = subtotal * gstRate;
-  const totalAmount = subtotal + gstAmount;
+  const gstAmount = Math.round(subtotal * gstRate * 100) / 100;
+  const totalAmount = Math.round((subtotal + gstAmount) * 100) / 100;
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
 

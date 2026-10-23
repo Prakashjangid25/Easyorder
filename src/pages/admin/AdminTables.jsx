@@ -116,11 +116,12 @@ export default function AdminTables() {
   };
 
   // Construct the scanning URL for QR code
-  const getTableScanUrl = (name) => {
+  const getTableScanUrl = (name, id) => {
+    const tableId = id || name;
     if (activeRestaurantId) {
-      return `${appBaseUrl}/menu/${activeRestaurantId}/${encodeURIComponent(name)}`;
+      return `${appBaseUrl}/menu/${activeRestaurantId}/${encodeURIComponent(tableId)}`;
     }
-    return `${appBaseUrl}/menu?table=${encodeURIComponent(name)}`;
+    return `${appBaseUrl}/menu?table=${encodeURIComponent(tableId)}`;
   };
 
   const copyToClipboard = (text) => {
@@ -276,7 +277,7 @@ export default function AdminTables() {
                     <div>
                       <span style={{ fontWeight: "700", fontSize: "1rem" }}>{t.name}</span>
                       <span style={{ display: "block", fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                        URL: {getTableScanUrl(t.name).slice(0, 35)}...
+                        URL: {getTableScanUrl(t.name, t.id).slice(0, 35)}...
                       </span>
                     </div>
 
@@ -339,12 +340,12 @@ export default function AdminTables() {
               </div>
 
               <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                <button className="btn btn-outline" onClick={() => copyToClipboard(getTableScanUrl(selectedTableQR.name))} style={{ gap: "8px", width: "100%", justifyContent: "center" }}>
+                <button className="btn btn-outline" onClick={() => copyToClipboard(getTableScanUrl(selectedTableQR.name, selectedTableQR.id))} style={{ gap: "8px", width: "100%", justifyContent: "center" }}>
                   <Clipboard size={14} /> Copy Table Order Link
                 </button>
 
                 <a
-                  href={getTableScanUrl(selectedTableQR.name)}
+                  href={getTableScanUrl(selectedTableQR.name, selectedTableQR.id)}
                   target="_blank"
                   rel="noreferrer"
                   style={{ fontSize: "0.85rem", color: "var(--secondary-color)", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", fontWeight: "600" }}

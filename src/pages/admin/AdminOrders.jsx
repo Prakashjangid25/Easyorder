@@ -16,6 +16,15 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [highlightedOrderIds, setHighlightedOrderIds] = useState(new Set());
 
+  useEffect(() => {
+    if (selectedOrder) {
+      const updated = orders.find((o) => o.id === selectedOrder.id);
+      if (updated && updated !== selectedOrder) {
+        setSelectedOrder(updated);
+      }
+    }
+  }, [orders]);
+
   const { showToast } = useToast();
   const { settings, activeRestaurantId } = useSettings();
 
@@ -290,7 +299,7 @@ export default function AdminOrders() {
                 <div className="flex justify-between align-center" style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "16px" }}>
                   <div>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                      ORDER #{selectedOrder.id.toUpperCase()}
+                      ORDER #{selectedOrder.id.slice(-8).toUpperCase()}
                     </span>
                     <h2 style={{ fontSize: "1.6rem", marginTop: "4px" }}>Table {selectedOrder.tableNumber}</h2>
                     <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Placed at: {selectedOrder.orderDate} {selectedOrder.orderTime}</p>

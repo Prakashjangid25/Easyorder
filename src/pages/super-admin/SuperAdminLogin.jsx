@@ -8,7 +8,7 @@ import { useToast } from "../../context/ToastContext.jsx";
 
 export default function SuperAdminLogin() {
   const [email, setEmail] = useState("superadmin@easyorder.com");
-  const [password, setPassword] = useState("superadmin123");
+  const [password, setPassword] = useState("SuperAdmin@2026");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useToast();

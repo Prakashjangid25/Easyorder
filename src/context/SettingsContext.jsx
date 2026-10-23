@@ -132,8 +132,23 @@ export function SettingsProvider({ children }) {
     try {
       const settingsRef = doc(db, "restaurants", targetRestaurantId, "settings", "restaurant");
       await setDoc(settingsRef, newSettings, { merge: true });
+
+      // Keep restaurant root document in sync for super-admin inspection and branding fallbacks
+      const restaurantRef = doc(db, "restaurants", targetRestaurantId);
+      const rootUpdates = {};
+      if (newSettings.restaurantName !== undefined) rootUpdates.name = newSettings.restaurantName;
+      if (newSettings.restaurantLogo !== undefined) rootUpdates.logo = newSettings.restaurantLogo;
+      if (newSettings.restaurantBanner !== undefined) rootUpdates.banner = newSettings.restaurantBanner;
+      if (newSettings.primaryColor !== undefined) rootUpdates.primaryColor = newSettings.primaryColor;
+      if (newSettings.secondaryColor !== undefined) rootUpdates.secondaryColor = newSettings.secondaryColor;
+      if (newSettings.phone !== undefined) rootUpdates.phone = newSettings.phone;
+      if (newSettings.address !== undefined) rootUpdates.address = newSettings.address;
+      if (Object.keys(rootUpdates).length > 0) {
+        await setDoc(restaurantRef, rootUpdates, { merge: true });
+      }
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, "settings");
+      handleFirestoreError(error, OperationType.UPDATE, "settings");
+      throw error;
     }
   };
 

@@ -30,6 +30,14 @@ export function CartProvider({ children }) {
   }, [cart]);
 
   const setRestaurantId = (id) => {
+    if (id && restaurantId && id !== restaurantId) {
+      setCart([]);
+      setSpecialInstructions("");
+      setTableNumberState("");
+      setIsTableConfirmed(false);
+      sessionStorage.removeItem("easyorder-table");
+      localStorage.removeItem("easyorder-cart");
+    }
     setRestaurantIdState(id || null);
     if (id) {
       sessionStorage.setItem("easyorder-restaurant-id", id);

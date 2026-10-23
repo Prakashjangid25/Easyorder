@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
+import "./styles/premium.css";
 import { initializeSuperAdmin } from "./firebase/initSuperAdmin.js";
 
 // Auto-create super admin account on app startup

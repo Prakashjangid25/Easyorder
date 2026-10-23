@@ -149,18 +149,24 @@ function SuperAdminProtectedRoute({ children }) {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
-    const session = localStorage.getItem("superAdminSession");
-    if (session) {
-      try {
-        const parsed = JSON.parse(session);
-        if (parsed && parsed.email) {
-          setIsSuperAdmin(true);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const session = localStorage.getItem("superAdminSession");
+      let validSession = false;
+
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          validSession = Boolean(parsed && parsed.email && user && user.email === parsed.email);
+        } catch (e) {
+          localStorage.removeItem("superAdminSession");
         }
-      } catch (e) {
-        localStorage.removeItem("superAdminSession");
       }
-    }
-    setLoading(false);
+
+      setIsSuperAdmin(validSession);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   if (loading) {
